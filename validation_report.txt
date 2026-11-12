@@ -1,0 +1,109 @@
+LAST SHELTER — STATIC PROJECT CHECK
+[OK] project.godot exists
+[OK] main scene exists
+[OK] main GDScript exists
+[OK] main scene path matches project settings
+[OK] project title is configured
+[OK] project version matches final source package
+[OK] main scene references game.gd
+[OK] required function _ready exists
+[OK] required function _process exists
+[OK] required function _draw exists
+[OK] required function _save_game exists
+[OK] required function _load_game exists
+[OK] required function _use_stairs_up exists
+[OK] required function _use_stairs_down exists
+[OK] required function _validate_room_connectivity exists
+[OK] all nine planned rooms are declared
+[OK] room connectivity data is present
+[OK] save path uses Godot user data
+[OK] cliffside concept reference is included
+[OK] illustrated room asset exists: bedroom
+[OK] illustrated room asset exists: living
+[OK] illustrated room asset exists: kitchen
+[OK] illustrated room asset exists: workshop
+[OK] illustrated room asset exists: storage
+[OK] illustrated room asset exists: arsenal
+[OK] illustrated room asset exists: guest1
+[OK] illustrated room asset exists: guest2
+[OK] animated survivor sprite sheet exists
+[OK] approved bunker and balcony full-screen artwork are loaded and rendered
+[OK] balcony defense scene transitions exist
+[OK] four timed zombie attack waves are implemented
+[OK] machine-gun firing and reload actions exist
+[OK] dynamic ammunition and defense HUD state exist
+[OK] survival resource counters update over approved artwork
+[OK] approved first-person balcony defense artwork is included
+[OK] survivor directional walk animation is wired
+[OK] furniture hotspots trigger contextual interactions
+[OK] stairwell tap navigation is implemented
+[OK] reinforced room framing is drawn
+[OK] selected room signage is drawn
+[OK] approved bunker-and-coast composition is used as the full-screen layer
+[OK] approved artwork controls have interactive hit areas
+[OK] stair movement uses an animated waypoint path
+[OK] stair traversal starts and finishes without an instant floor teleport
+[OK] stair landings align with the left-side spiral staircase
+[OK] stair traversal preserves the relaxed at-home character behavior
+[OK] v0.20 function _walkable_rectangles exists
+[OK] v0.20 function _can_stand_at exists
+[OK] v0.20 function _craft_medkit exists
+[OK] v0.20 function _use_medkit exists
+[OK] movement checks room/corridor collision geometry
+[OK] survival meters are displayed as progress bars
+[OK] medkits are persisted in saves
+[OK] loaded inventory values are sanitized
+[OK] breached shelter has a player health consequence
+[OK] v0.21 gameplay action _fish exists
+[OK] v0.21 gameplay action _scavenge exists
+[OK] v0.21 gameplay action _purify_water exists
+[OK] v0.21 gameplay action _upgrade_barricades exists
+[OK] v0.21 gameplay action _journal_update exists
+[OK] daily weather variation exists
+[OK] day/night clock and weather state remain wired under approved art
+[OK] noise attracts threats and is shown in HUD
+[OK] water purification and clean-water inventory exist
+[OK] barricade upgrade progression exists
+[OK] survivor journal progression exists
+[OK] morale stat is implemented
+[OK] new survival systems are saved
+[OK] v0.22 system _explore_island exists
+[OK] v0.22 system _forage exists
+[OK] v0.22 system _tend_garden exists
+[OK] v0.22 system _craft_spear exists
+[OK] v0.22 system _hunt exists
+[OK] v0.22 system _collect_rainwater exists
+[OK] v0.22 system _use_radio exists
+[OK] v0.22 system _upgrade_workshop exists
+[OK] v0.22 system _treat_injury exists
+[OK] v0.22 system _process_salvage exists
+[OK] island location is persisted
+[OK] garden progression is persisted
+[OK] weapon durability is persisted
+[OK] radio batteries are persisted
+[OK] new resources are visible in inventory HUD
+[OK] Android export preset exists
+[OK] Android preset targets ARM64
+[OK] Android version code/name are updated
+[OK] GitHub Actions Android export workflow and runtime smoke test exist
+[OK] application icon asset exists
+[OK] Android build instructions exist
+[OK] generated Godot files and signing keys are excluded from Git
+[OK] mobile landscape orientation configured
+[OK] 16:9 composition preserved on mobile displays
+[OK] periodic autosave is wired
+[OK] mobile pause/resume lifecycle is handled
+[OK] each floor has its own visible movement plane
+[OK] room graph matches the three floors in the approved bunker artwork
+[OK] room interaction rectangles are populated on every floor
+[OK] Android virtual joystick touch tracking is wired
+[OK] high-resolution casual survivor sprite animation is rendered
+[OK] zombie targets spawn and shots require aiming accuracy
+[OK] late-wave armored zombies require multiple hits
+[OK] lookout room interaction enters the dedicated balcony defense mode
+[OK] escaped zombies damage the shelter and leave the active wave
+[OK] aim and zoom modes change the on-screen reticle
+[OK] survivor sprite sheet is 4x4 high-resolution transparent RGBA
+
+105 passed, 0 failed
+NOTE: Static checks do not validate GDScript parsing, runtime behavior, rendering, or Android export.
