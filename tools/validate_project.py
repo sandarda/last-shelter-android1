@@ -5,6 +5,50 @@ Does not replace opening/running the project in Godot.
 from pathlib import Path
 import re
 import sys
+import struct
+import zlib
+
+
+def decode_png_rgba(path):
+    """Validate PNG structure and fully decompress its image stream using stdlib only."""
+    data = path.read_bytes()
+    if not data.startswith(b"\x89PNG\r\n\x1a\n"):
+        raise ValueError("invalid PNG signature")
+    pos = 8
+    width = height = bit_depth = color_type = None
+    idat = bytearray()
+    saw_iend = False
+    while pos < len(data):
+        if pos + 12 > len(data):
+            raise ValueError("truncated PNG chunk")
+        length = struct.unpack(">I", data[pos:pos + 4])[0]
+        kind = data[pos + 4:pos + 8]
+        end = pos + 12 + length
+        if end > len(data):
+            raise ValueError("truncated PNG data")
+        payload = data[pos + 8:pos + 8 + length]
+        stored_crc = struct.unpack(">I", data[pos + 8 + length:end])[0]
+        if zlib.crc32(kind + payload) & 0xffffffff != stored_crc:
+            raise ValueError("PNG chunk CRC mismatch")
+        if kind == b"IHDR":
+            width, height, bit_depth, color_type, compression, filtering, interlace = struct.unpack(">IIBBBBB", payload)
+            if compression != 0 or filtering != 0 or interlace != 0:
+                raise ValueError("unsupported PNG encoding")
+        elif kind == b"IDAT":
+            idat.extend(payload)
+        elif kind == b"IEND":
+            saw_iend = True
+            break
+        pos = end
+    if not saw_iend or not width or not height:
+        raise ValueError("missing PNG header or end chunk")
+    if bit_depth != 8 or color_type != 6:
+        raise ValueError("expected 8-bit RGBA PNG")
+    decoded = zlib.decompress(bytes(idat))
+    expected = height * (1 + width * 4)
+    if len(decoded) != expected:
+        raise ValueError("decompressed pixel data has an unexpected size")
+    return width, height, bit_depth, color_type
 
 ROOT = Path(__file__).resolve().parents[1]
 errors = []
@@ -122,7 +166,9 @@ require(workflow.is_file() and 'godot --headless --path . --export-debug "Androi
 require(icon.is_file() and icon.stat().st_size > 1000, "application icon asset exists")
 require(build_doc.is_file() and "GitHub build" in build_doc.read_text(encoding="utf-8"), "Android build instructions exist")
 gitignore = ROOT / ".gitignore"
-require(gitignore.is_file() and ".godot/" in gitignore.read_text(encoding="utf-8") and "*.keystore" in gitignore.read_text(encoding="utf-8"), "generated Godot files and signing keys are excluded from Git")
+ignore_text = gitignore.read_text(encoding="utf-8") if gitignore.is_file() else ""
+ignore_patterns = {line.strip() for line in ignore_text.splitlines() if line.strip() and not line.lstrip().startswith("#")}
+require(gitignore.is_file() and {".godot/", ".import/", "build/", "*.keystore", "*.jks"}.issubset(ignore_patterns), "generated Godot files and signing keys are excluded from Git")
 if project.exists():
     ptxt = project.read_text(encoding="utf-8")
     require('window/handheld/orientation=4' in ptxt, "mobile landscape orientation configured")
@@ -149,11 +195,11 @@ if script.exists():
 sprite = ROOT / "art/characters/survivor_sheet.png"
 if sprite.exists():
     try:
-        from PIL import Image
-        with Image.open(sprite) as im:
-            require(im.size == (512, 640) and im.mode == "RGBA", "survivor sprite sheet is 4x4 high-resolution transparent RGBA")
-    except Exception:
-        require(False, "survivor sprite sheet can be decoded")
+        width, height, bit_depth, color_type = decode_png_rgba(sprite)
+        require((width, height, bit_depth, color_type) == (512, 640, 8, 6), "survivor sprite sheet is 4x4 high-resolution transparent RGBA")
+        require(True, "survivor sprite sheet can be decoded")
+    except Exception as exc:
+        require(False, f"survivor sprite sheet can be decoded ({exc})")
 
 print("LAST SHELTER — STATIC PROJECT CHECK")
 for status, message in notes + errors:
