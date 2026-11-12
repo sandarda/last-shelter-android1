@@ -167,7 +167,7 @@ require(icon.is_file() and icon.stat().st_size > 1000, "application icon asset e
 require(build_doc.is_file() and "GitHub build" in build_doc.read_text(encoding="utf-8"), "Android build instructions exist")
 gitignore = ROOT / ".gitignore"
 ignore_text = gitignore.read_text(encoding="utf-8") if gitignore.is_file() else ""
-ignore_patterns = {line.strip() for line in ignore_text.splitlines() if line.strip() and not line.lstrip().startswith("#")}
+ignore_patterns = {line.strip().lstrip("\ufeff") for line in ignore_text.splitlines() if line.strip() and not line.lstrip().startswith("#")}
 print("DEBUG ROOT:", ROOT)
 print("DEBUG GITIGNORE EXISTS:", gitignore.is_file())
 print("DEBUG PATTERNS:", sorted(ignore_patterns))
