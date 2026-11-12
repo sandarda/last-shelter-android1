@@ -168,6 +168,9 @@ require(build_doc.is_file() and "GitHub build" in build_doc.read_text(encoding="
 gitignore = ROOT / ".gitignore"
 ignore_text = gitignore.read_text(encoding="utf-8") if gitignore.is_file() else ""
 ignore_patterns = {line.strip() for line in ignore_text.splitlines() if line.strip() and not line.lstrip().startswith("#")}
+print("DEBUG ROOT:", ROOT)
+print("DEBUG GITIGNORE EXISTS:", gitignore.is_file())
+print("DEBUG PATTERNS:", sorted(ignore_patterns))
 require(gitignore.is_file() and {".godot/", ".import/", "build/", "*.keystore", "*.jks"}.issubset(ignore_patterns), "generated Godot files and signing keys are excluded from Git")
 if project.exists():
     ptxt = project.read_text(encoding="utf-8")
