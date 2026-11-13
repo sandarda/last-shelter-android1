@@ -851,7 +851,7 @@ func _walkable_rectangles() -> Array[Rect2]:
 		areas.append(Rect2(a.end.x - 2.0, a.get_center().y - 22.0, b.position.x - a.end.x + 4.0, 44.0))
 	# Stairwell and landing connect the three floors.
 	areas.append(Rect2(205.0, 160.0, 145.0, 545.0))
-	var floor_y := FLOOR_CENTERS_Y[current_floor]
+	var floor_y: float = float(FLOOR_CENTERS_Y[current_floor])
 	areas.append(Rect2(320.0, floor_y - 25.0, 115.0, 50.0))
 	return areas
 
@@ -1214,7 +1214,7 @@ func _journal_update() -> void:
 # v0.22 — stage 1: island exploration with location unlocks and travel cost.
 func _explore_island() -> void:
 	var destinations := ["ПЛЯЖ", "ЛЕС", "ЛАГУНА", "СКАЛЬНЫЙ ПЕРЕВАЛ", "СТАРЫЙ ПИРС"]
-	var next_location := destinations[randi_range(0, destinations.size() - 1)]
+	var next_location: String = str(destinations[randi_range(0, destinations.size() - 1)])
 	if energy < 12.0:
 		_set_message("Сил не хватает для выхода на остров.")
 		return
