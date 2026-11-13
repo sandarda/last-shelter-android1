@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.35.0 — Approved visual implementation pass
+
+- Updated the bunker hub to the approved detailed artwork and removed the right-side action list from the main location.
+- Added dedicated full-screen artwork backplates for all nine rooms in the same warm stone/wood/metal visual language.
+- Removed the procedural primitive room renderer; missing room art now raises an asset error instead of silently drawing a placeholder.
+- Added a detailed transparent machine-gun turret sprite and connected its rotation to manual touch/mouse aiming.
+- Added a detailed infected sprite; individual zombie scale remains tied to travelled distance from the surf to the balcony.
+- Repositioned room hit areas, floor movement planes, and spiral-stair traversal to the approved bunker layout.
+- Preserved autosave, survival progression, room stories, and four escalating balcony-defense waves.
+- Android version name: 0.35.0; version code: 37.
+
+
 ## v0.34.1 — Distance-based zombie perspective
 - Zombie scale now derives from each target's progress between its individual water spawn line and the balcony breach line.
 - Uses smoothstep easing for gradual, frame-rate-independent growth from 26–38% at spawn to 155% near the balcony.

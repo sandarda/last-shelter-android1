@@ -1,31 +1,30 @@
-# Final handoff checklist — v0.33.1
+# Final handoff checklist — v0.35.0
 
 ## Included in this source package
-- Godot 4.3 project and main scene.
-- The approved bunker overview and first-person balcony defense artwork.
-- A three-floor room graph aligned to the approved image: bedroom/living/lookout; workshop/arsenal/kitchen; storage/greenhouse/technical block.
-- A transparent 4×4 survivor animation sheet: casual plaid shirt, everyday trousers and boots, no backpack.
-- Floor-specific walkable areas, touch joystick tracking, tap-to-move, furniture approach/interact behavior, and animated stair waypoint traversal.
-- Survival needs, time/weather, resources, crafting, gardening, radio, exploration, journal, injury, morale, upgrades, and persistent save data.
-- Balcony combat with moving target actors, aim-based hit detection, later-wave multi-hit enemies, ammunition/reload, breach damage, and wave rewards.
-- ARM64 Android export preset and GitHub Actions workflow.
+- Godot 4.3 project and main scene, Android ARM64 export preset, and GitHub Actions workflow.
+- Updated approved bunker hub artwork without the right-side action list.
+- Full-screen image backplates for all nine rooms: bedroom, living room, lookout, laboratory, arsenal, kitchen, greenhouse, workshop, and storage.
+- No procedural fallback for room interiors; missing room art raises an asset error instead of showing primitive placeholders.
+- Transparent 4×4 survivor animation sheet: casual clothes, no backpack.
+- Detailed transparent turret artwork, manual horizontal aiming, hold-to-fire, recoil, muzzle flash, and ejected casings.
+- Textured zombie actors with distance-based perspective scaling from the waterline toward the balcony.
+- Repositioned room interaction areas and stair traversal aligned to the approved bunker image.
+- Existing survival systems, room story progress, autosave, and four defense waves.
 
 ## Checks completed in this environment
-- `python3 tools/validate_project.py`: 105 passed, 0 failed.
-- GitHub Actions YAML parsed successfully.
-- All `res://` asset references resolve to files in the project.
-- Artwork and sprite assets decode; sprite sheet is 512×640 RGBA.
-- ZIP archive integrity checked after packaging.
+- `python3 tools/validate_project.py`: 120 passed, 0 failed.
+- PNG assets are present; defense turret and zombie images are RGBA.
+- GitHub Actions workflow includes static validation, headless Godot import, smoke test, ARM64 debug APK export, and artifact upload.
 
 ## Checks still required on GitHub
-This working environment does not contain Godot or the Android export toolchain. GDScript parsing, runtime behavior, device rendering/touch response, and APK export have therefore **not** been confirmed locally. The workflow first validates the source, then imports the project in headless Godot, launches a short smoke test, exports a debug-signed ARM64 APK, and uploads it as `LastShelter-Android`. A green Actions run is the final technical acceptance gate.
+This environment does not contain the Godot executable or Android export toolchain. GDScript parsing, runtime behavior, device rendering/touch response, and APK export are therefore **not confirmed locally**. A successful GitHub Actions run is the final technical acceptance gate.
 
 ## Upload steps
 1. Download and extract this archive.
-2. Open the extracted `last-shelter-android-main` folder.
+2. Open the extracted `last_shelter_v0_35_0` folder.
 3. Upload all contents to the root of the GitHub repository, including the hidden `.github` folder and `.gitignore`.
 4. Commit/push to `main` or `master`.
 5. Open GitHub → Actions → Last Shelter Android APK.
 6. When the run succeeds, download `LastShelter-Android` under Artifacts.
 
-The generated APK is debug-signed for device testing, not Play Store publication. Production signing requires a private release keystore and GitHub Secrets.
+The exported APK is debug-signed for device testing, not Play Store publication. Production signing requires a private release keystore and GitHub Secrets.

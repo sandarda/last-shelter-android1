@@ -1,23 +1,9 @@
-# Approved interface implementation — v0.30
+# Approved visual design — v0.35.0
 
-The full-screen user-approved 1536x864 artwork is now the actual in-game visual layer (`art/ui/approved_fullscreen.png`), not a concept-only reference or a newly drawn approximation.
+The accepted cliffside bunker artwork is the actual full-screen hub background. The right-side action list has been removed. The bottom command strip is the primary navigation surface, while the nine room areas remain directly tappable.
 
-Godot `Control` hit areas are placed over the illustrated controls so the existing survival logic remains callable:
-- Left rail: shelter, craft, inventory, radio, map, tasks, diary, development.
-- Room hotspots: bedroom, living room, lookout, workshop, armory, kitchen, storage, greenhouse, technical block.
-- Right panel: objectives and threat response.
-- Bottom row: gather resources, scouting, upgrades, research, defense, rest.
+Every room opens a full-screen illustrated backplate in the same warm, highly detailed stone/wood/metal style. The nine room backplates are loaded as image assets; the game no longer draws simplified procedural room interiors as a fallback.
 
-The design viewport is 1536x864 (16:9) and scales through the existing `canvas_items` stretch mode for Android. The art is kept intact; interaction is implemented as transparent clickable regions over the matching illustrated elements.
+The balcony defense screen uses a detailed approved image plate. A separate textured turret sprite is drawn on a rotating pivot and follows the player's manual aim. Zombie targets use a textured sprite and scale smoothly according to their travelled distance from the waterline to the balcony.
 
-The art itself contains a static presentation of values and objectives. Runtime numeric overlays and dynamic task rendering are a follow-up integration task; game state and save logic continue to operate underneath.
-
-
-## v0.32 — relaxed survivor and stair traversal
-
-The survivor approaches the spiral staircase on the left side of the approved bunker artwork, then follows a multi-waypoint switchback path for both ascent and descent. Floor changes occur only after the traversal animation reaches the destination landing; there is no instant floor teleport. The character keeps the calm, at-home movement pace and uses the existing directional walk-cycle frames.
-
-
-## v0.33 — movement presentation
-
-The survivor is rendered as a transparent 4×4 directional sprite sheet, wearing a red plaid shirt, everyday trousers, and boots; there is no backpack. The lower-left touch joystick is tracked by touch index so the movement axis remains stable until that finger is released. The three floor walkable planes align to the bunker artwork: lower level at y=620, residential level at y=420, upper level at y=220.
+The viewport remains 1536×864 (16:9). Transparent interaction zones and touch controls are layered over the artwork; they do not replace the artwork with generic panels.

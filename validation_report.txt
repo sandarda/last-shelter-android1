@@ -20,12 +20,13 @@ LAST SHELTER — STATIC PROJECT CHECK
 [OK] cliffside concept reference is included
 [OK] illustrated room asset exists: bedroom
 [OK] illustrated room asset exists: living
+[OK] illustrated room asset exists: lookout
+[OK] illustrated room asset exists: techblock
+[OK] illustrated room asset exists: arsenal
 [OK] illustrated room asset exists: kitchen
+[OK] illustrated room asset exists: greenhouse
 [OK] illustrated room asset exists: workshop
 [OK] illustrated room asset exists: storage
-[OK] illustrated room asset exists: arsenal
-[OK] illustrated room asset exists: guest1
-[OK] illustrated room asset exists: guest2
 [OK] animated survivor sprite sheet exists
 [OK] approved bunker and balcony full-screen artwork are loaded and rendered
 [OK] balcony defense scene transitions exist
@@ -37,13 +38,11 @@ LAST SHELTER — STATIC PROJECT CHECK
 [OK] survivor directional walk animation is wired
 [OK] furniture hotspots trigger contextual interactions
 [OK] stairwell tap navigation is implemented
-[OK] reinforced room framing is drawn
-[OK] selected room signage is drawn
 [OK] approved bunker-and-coast composition is used as the full-screen layer
 [OK] approved artwork controls have interactive hit areas
 [OK] stair movement uses an animated waypoint path
 [OK] stair traversal starts and finishes without an instant floor teleport
-[OK] stair landings align with the left-side spiral staircase
+[OK] stair landings align with the central spiral staircase
 [OK] stair traversal preserves the relaxed at-home character behavior
 [OK] v0.20 function _walkable_rectangles exists
 [OK] v0.20 function _can_stand_at exists
@@ -99,19 +98,28 @@ LAST SHELTER — STATIC PROJECT CHECK
 [OK] Android virtual joystick touch tracking is wired
 [OK] high-resolution casual survivor sprite animation is rendered
 [OK] zombie targets spawn from water and shots follow turret aim
+[OK] zombie size grows smoothly according to actual distance from surf to balcony
 [OK] late-wave armored zombies require multiple hits
 [OK] lookout room interaction enters the dedicated balcony defense mode
 [OK] escaped zombies damage the shelter and leave the active wave
 [OK] rooms open as isolated full-screen scenes
 [OK] room movement is restricted to left and right
 [OK] individual room story progress is persisted
-[OK] balcony begins with an empty shoreline before water spawns
-[OK] turret rotation, muzzle flash, recoil and ejected casings are rendered
+[OK] v0.34 saves migrate to the updated room and stair layout
+[OK] balcony begins with its approved detailed shoreline artwork
+[OK] textured turret rotation, muzzle flash, recoil and ejected casings are rendered
 [OK] machine gun uses an infinite belt without reloading
 [OK] stair direction controls appear at the landing
 [OK] aim and zoom modes change the on-screen reticle
+[OK] no procedural primitive fallback remains for full-screen rooms
+[OK] real turret and infected artwork are loaded
+[OK] infected actors use textured artwork instead of vector silhouettes
+[OK] right-side action list is removed from the hub
+[OK] all nine approved room images are loaded
+[OK] defense artwork exists: turret.png
+[OK] defense artwork exists: zombie.png
 [OK] survivor sprite sheet is 4x4 high-resolution transparent RGBA
 [OK] survivor sprite sheet can be decoded
 
-113 passed, 0 failed
+121 passed, 0 failed
 NOTE: Static checks do not validate GDScript parsing, runtime behavior, rendering, or Android export.

@@ -68,7 +68,7 @@ if project.exists():
     p = project.read_text(encoding="utf-8")
     require('run/main_scene="res://scenes/main.tscn"' in p, "main scene path matches project settings")
     require('config/name="Последнее убежище"' in p, "project title is configured")
-    require('config/version="0.34.1"' in p, "project version matches final source package")
+    require('config/version="0.35.0"' in p, "project version matches final source package")
 if scene.exists():
     s = scene.read_text(encoding="utf-8")
     require('res://scripts/game.gd' in s, "main scene references game.gd")
@@ -88,7 +88,7 @@ if script.exists():
 
 concept = ROOT / "art/reference/cliffside_shelter_concept.png"
 require(concept.is_file() and concept.stat().st_size > 100_000, "cliffside concept reference is included")
-for room_id in ["bedroom", "living", "kitchen", "workshop", "storage", "arsenal", "guest1", "guest2"]:
+for room_id in ["bedroom", "living", "lookout", "techblock", "arsenal", "kitchen", "greenhouse", "workshop", "storage"]:
     asset = ROOT / "art/rooms" / f"{room_id}.png"
     require(asset.is_file() and asset.stat().st_size > 5_000, f"illustrated room asset exists: {room_id}")
 survivor = ROOT / "art/characters/survivor_sheet.png"
@@ -106,13 +106,11 @@ if script.exists():
     require("_update_facing" in g and "animation_frame" in g, "survivor directional walk animation is wired")
     require("_try_furniture_interaction" in g and "_interact_with_furniture" in g, "furniture hotspots trigger contextual interactions")
     require("_try_stair_navigation" in g and "pending_stair_floor" in g, "stairwell tap navigation is implemented")
-    require("func _draw_room_structure(" in g, "reinforced room framing is drawn")
-    require("func _draw_room_badge(" in g, "selected room signage is drawn")
     require("art/ui/approved_fullscreen.png" in g and "1536, 864" in g, "approved bunker-and-coast composition is used as the full-screen layer")
     require("func _add_hotspot(" in g and "_add_hotspot(layer" in g, "approved artwork controls have interactive hit areas")
     require("_process_stair_transition" in g and "stair_path_points" in g, "stair movement uses an animated waypoint path")
     require("_begin_stair_transition" in g and "_finish_stair_transition" in g, "stair traversal starts and finishes without an instant floor teleport")
-    require("STAIR_LANDINGS" in g and "Vector2(275.0, 485.0)" in g, "stair landings align with the left-side spiral staircase")
+    require("STAIR_LANDINGS" in g and "Vector2(560.0, 470.0)" in g, "stair landings align with the central spiral staircase")
     require("Ты спокойно поднимаешься по лестнице" in g and "Ты спокойно спускаешься по лестнице" in g, "stair traversal preserves the relaxed at-home character behavior")
 
 # v0.20 feature wiring checks (static only)
@@ -136,9 +134,9 @@ if script.exists():
     require('weather = ["ЯСНО", "ТУМАН", "ДОЖДЬ", "ВЕТЕР"]' in g, "daily weather variation exists")
     require('weather = ["ЯСНО", "ТУМАН", "ДОЖДЬ", "ВЕТЕР"]' in g and 'minute_of_day' in g, "day/night clock and weather state remain wired under approved art")
     require('noise_level' in g and 'Шум:' in g, "noise attracts threats and is shown in HUD")
-    require('purified_water' in g and 'Очистить воду' in g, "water purification and clean-water inventory exist")
-    require('barricade_level' in g and 'Улучшить баррикады' in g, "barricade upgrade progression exists")
-    require('journal_step' in g and 'Записать в журнал' in g, "survivor journal progression exists")
+    require('purified_water' in g and 'func _purify_water(' in g, "water purification and clean-water inventory exist")
+    require('barricade_level' in g and 'func _upgrade_barricades(' in g, "barricade upgrade progression exists")
+    require('journal_step' in g and 'func _journal_update(' in g, "survivor journal progression exists")
     require('morale' in g and 'Боевой дух' in g, "morale stat is implemented")
     require('cfg.set_value("world", "weather", weather)' in g and 'cfg.set_value("world", "journal_step", journal_step)' in g, "new survival systems are saved")
 
@@ -161,7 +159,7 @@ icon = ROOT / "art/app_icon.png"
 build_doc = ROOT / "docs/ANDROID_BUILD.md"
 require(preset.is_file() and 'name="Android"' in preset.read_text(encoding="utf-8"), "Android export preset exists")
 require(preset.is_file() and 'architectures/arm64-v8a=true' in preset.read_text(encoding="utf-8"), "Android preset targets ARM64")
-require(preset.is_file() and 'version/code=36' in preset.read_text(encoding="utf-8") and 'version/name="0.34.1"' in preset.read_text(encoding="utf-8"), "Android version code/name are updated")
+require(preset.is_file() and 'version/code=37' in preset.read_text(encoding="utf-8") and 'version/name="0.35.0"' in preset.read_text(encoding="utf-8"), "Android version code/name are updated")
 require(workflow.is_file() and 'godot --headless --path . --export-debug "Android"' in workflow.read_text(encoding="utf-8") and 'godot --headless --path . --quit-after 5' in workflow.read_text(encoding="utf-8"), "GitHub Actions Android export workflow and runtime smoke test exist")
 require(icon.is_file() and icon.stat().st_size > 1000, "application icon asset exists")
 require(build_doc.is_file() and "GitHub build" in build_doc.read_text(encoding="utf-8"), "Android build instructions exist")
@@ -181,7 +179,7 @@ if script.exists():
 # v0.33 movement and defense gameplay checks (static wiring only)
 if script.exists():
     g = script.read_text(encoding="utf-8")
-    require("FLOOR_CENTERS_Y := [620.0, 420.0, 220.0]" in g, "each floor has its own visible movement plane")
+    require("FLOOR_CENTERS_Y := [680.0, 470.0, 250.0]" in g, "each floor has its own visible movement plane")
     require('"id":"greenhouse"' in g and '"id":"techblock"' in g and '"id":"lookout"' in g, "room graph matches the three floors in the approved bunker artwork")
     require("room_rects.clear()" in g and "room_rects.append(r)" in g, "room interaction rectangles are populated on every floor")
     require("event.index == joystick_touch_index" in g and "_update_virtual_joystick(event.position)" in g, "Android virtual joystick touch tracking is wired")
@@ -194,11 +192,24 @@ if script.exists():
     require("func _enter_room_view(" in g and "func _draw_room_view(" in g, "rooms open as isolated full-screen scenes")
     require("room_player_x = clampf" in g and 'Input.get_axis("ui_left", "ui_right")' in g, "room movement is restricted to left and right")
     require("room_story_" in g and "ROOM_STORIES" in g and 'cfg.set_value("world", "quest_flags", quest_flags)' in g, "individual room story progress is persisted")
-    require("_draw_clean_balcony_panorama()" in g and "defense_spawn_clock = 3.2" in g, "balcony begins with an empty shoreline before water spawns")
-    require("muzzle_flash_timer" in g and "casing_particles.append" in g and "_draw_machinegun_turret()" in g, "turret rotation, muzzle flash, recoil and ejected casings are rendered")
+    require('cfg.set_value("world", "version", 11)' in g and "if save_version < 11:" in g, "v0.34 saves migrate to the updated room and stair layout")
+    require("defense_spawn_clock = 3.2" in g and "art/ui/approved_balcony.png" in g, "balcony begins with its approved detailed shoreline artwork")
+    require("muzzle_flash_timer" in g and "casing_particles.append" in g and "_draw_machinegun_turret()" in g and "draw_texture_rect(turret_texture" in g, "textured turret rotation, muzzle flash, recoil and ejected casings are rendered")
     require('БЕСКОНЕЧНЫЙ' in g and 'ammo_reserve = 0' in g, "machine gun uses an infinite belt without reloading")
     require("stair_up_button.visible = near_stairs" in g and "stair_down_button.visible = near_stairs" in g, "stair direction controls appear at the landing")
     require("var reticle_radius := 14.0 if zoom_mode" in g, "aim and zoom modes change the on-screen reticle")
+
+# v0.35 approved-art implementation checks (static wiring only)
+if script.exists():
+    g = script.read_text(encoding="utf-8")
+    require("func _draw_procedural_room" not in g, "no procedural primitive fallback remains for full-screen rooms")
+    require("var turret_texture: Texture2D" in g and "var zombie_texture: Texture2D" in g, "real turret and infected artwork are loaded")
+    require("draw_texture_rect(zombie_texture" in g, "infected actors use textured artwork instead of vector silhouettes")
+    require("The right-side action list has been removed" in g, "right-side action list is removed from the hub")
+    require('var ids := [\"bedroom\", \"living\", \"kitchen\", \"workshop\", \"storage\", \"arsenal\", \"greenhouse\", \"techblock\", \"lookout\"]' in g, "all nine approved room images are loaded")
+for asset_name in ["turret.png", "zombie.png"]:
+    asset = ROOT / "art/defense" / asset_name
+    require(asset.is_file() and asset.stat().st_size > 10_000, f"defense artwork exists: {asset_name}")
 
 sprite = ROOT / "art/characters/survivor_sheet.png"
 if sprite.exists():

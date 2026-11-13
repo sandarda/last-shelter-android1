@@ -1,25 +1,25 @@
 extends Node2D
 
-# Last Shelter v0.34 — full-screen rooms, story activities, and live turret defense.
+# Last Shelter v0.35 — approved bunker artwork, full-screen room art, and textured turret defense.
 const PLAYER_SPEED := 210.0
-const ROOM_W := 250.0
-const ROOM_H := 150.0
+const ROOM_W := 360.0
+const ROOM_H := 210.0
 const DAY_MINUTES := 24 * 60
 const SAVE_PATH := "user://last_shelter_save.cfg"
 
 const LEVELS := [
-	{"name":"НИЖНИЙ ЭТАЖ — СКЛАД И ТЕХНИЧЕСКИЙ БЛОК", "rooms":[
-		{"id":"storage","name":"СКЛАД","pos":Vector2(-270,0),"color":Color("786044")},
-		{"id":"greenhouse","name":"ТЕПЛИЦА","pos":Vector2(0,0),"color":Color("667344")},
-		{"id":"techblock","name":"ТЕХБЛОК","pos":Vector2(270,0),"color":Color("536b75")}], "links":[[0,1],[1,2]]},
-	{"name":"СРЕДНИЙ ЭТАЖ — МАСТЕРСКАЯ И КУХНЯ", "rooms":[
-		{"id":"workshop","name":"МАСТЕРСКАЯ","pos":Vector2(-270,0),"color":Color("776044")},
-		{"id":"arsenal","name":"ОРУЖЕЙНАЯ","pos":Vector2(0,0),"color":Color("70513d")},
-		{"id":"kitchen","name":"КУХНЯ","pos":Vector2(270,0),"color":Color("806b48")}], "links":[[0,1],[1,2]]},
+	{"name":"НИЖНИЙ ЭТАЖ — ТЕПЛИЦА, МАСТЕРСКАЯ И СКЛАД", "rooms":[
+		{"id":"greenhouse","name":"ТЕПЛИЦА","pos":Vector2(-310,0),"color":Color("667344")},
+		{"id":"workshop","name":"МАСТЕРСКАЯ","pos":Vector2(190,0),"color":Color("776044")},
+		{"id":"storage","name":"СКЛАД","pos":Vector2(620,0),"color":Color("786044")}], "links":[[0,1],[1,2]]},
+	{"name":"СРЕДНИЙ ЭТАЖ — ЛАБОРАТОРИЯ, ОРУЖЕЙНАЯ И КУХНЯ", "rooms":[
+		{"id":"techblock","name":"ЛАБОРАТОРИЯ","pos":Vector2(-310,0),"color":Color("536b75")},
+		{"id":"arsenal","name":"ОРУЖЕЙНАЯ","pos":Vector2(190,0),"color":Color("70513d")},
+		{"id":"kitchen","name":"КУХНЯ","pos":Vector2(620,0),"color":Color("806b48")}], "links":[[0,1],[1,2]]},
 	{"name":"ВЕРХНИЙ ЭТАЖ — ЖИЛОЙ И СМОТРОВАЯ", "rooms":[
-		{"id":"bedroom","name":"СПАЛЬНЯ","pos":Vector2(-270,0),"color":Color("80634b")},
-		{"id":"living","name":"ГОСТИНАЯ","pos":Vector2(0,0),"color":Color("8a6045")},
-		{"id":"lookout","name":"СМОТРОВАЯ","pos":Vector2(270,0),"color":Color("66727a")}], "links":[[0,1],[1,2]]}
+		{"id":"bedroom","name":"СПАЛЬНЯ","pos":Vector2(-310,0),"color":Color("80634b")},
+		{"id":"living","name":"ГОСТИНАЯ","pos":Vector2(190,0),"color":Color("8a6045")},
+		{"id":"lookout","name":"СМОТРОВАЯ","pos":Vector2(620,0),"color":Color("66727a")}], "links":[[0,1],[1,2]]}
 ]
 
 # Every room has its own continuing story thread and practical activity.
@@ -31,7 +31,7 @@ const ROOM_STORIES := {
 	"storage": {"subtitle":"Склад долгосрочных запасов", "story":"Склад нужно регулярно проверять: сортировать припасы, отмечать недостачу и готовить наборы для вылазок.", "action":"Проверить запасы", "objective":"Провести учёт припасов"},
 	"arsenal": {"subtitle":"Оружейная и подготовка обороны", "story":"Оружие должно быть исправно, а защитное снаряжение — готово к внезапной тревоге.", "action":"Проверить оружие", "objective":"Подготовить оборону убежища"},
 	"greenhouse": {"subtitle":"Теплица и автономное питание", "story":"Растения дают свежую пищу, но требуют воды, семян и ежедневного ухода.", "action":"Ухаживать за растениями", "objective":"Поддерживать урожай"},
-	"techblock": {"subtitle":"Вода, энергия и системы жизнеобеспечения", "story":"Фильтры и насосы удерживают убежище автономным. Любая неисправность может стать серьёзной проблемой.", "action":"Обслужить фильтр", "objective":"Обеспечить чистую воду"},
+	"techblock": {"subtitle":"Лаборатория и исследования найденных материалов", "story":"Здесь изучают образцы с острова, проверяют воду и ищут способы сделать убежище ещё более автономным.", "action":"Провести анализ образцов", "objective":"Завершить лабораторный анализ"},
 	"lookout": {"subtitle":"Наблюдение за лагуной и побережьем", "story":"С берега иногда доносятся сигналы и шум прибоя. Здесь можно заметить угрозу раньше, чем она достигнет скалы.", "action":"Осмотреть побережье", "objective":"Проверить береговую линию"}
 }
 
@@ -43,12 +43,12 @@ const ROOM_STORY_STEPS := {
 	"storage": ["В учёте обнаруживается расхождение между записями и фактическими запасами.", "За ящиками найден небольшой тайник с забытыми припасами.", "Склад рассортирован, тайник внесён в журнал, экспедиционные наборы подготовлены."],
 	"arsenal": ["Проверка выявляет износ нескольких деталей оружия.", "После обслуживания оружие снова работает надёжно.", "Оборона готова; герой отмечает, что боезапас пулемёта в смотровой бесконечный."],
 	"greenhouse": ["На грядках появляются первые здоровые ростки.", "Герой восстанавливает полив и распределяет семена по грядкам.", "Созревает первый небольшой урожай, повышая автономность убежища."],
-	"techblock": ["Фильтр воды работает с перебоями и требует обслуживания.", "Насос очищен, а картридж промыт и установлен обратно.", "Система жизнеобеспечения снова подаёт чистую воду."],
+	"techblock": ["В лаборатории обнаружены неизвестные следы на образцах с побережья.", "Герой проверяет состав воды и сравнивает результаты с прежними записями.", "Анализ завершён: новые данные внесены в журнал исследований."],
 	"lookout": ["На горизонте замечен слабый отблеск у скрытой яхты.", "При наблюдении становится ясно: движение в воде приближается к берегу.", "Подана тревога. Герой занимает пулемёт и защищает побережье."]
 }
 
 var current_floor := 2
-var player_pos := Vector2(640, 220)
+var player_pos := Vector2(820, 250)
 var target_pos := Vector2.ZERO
 var moving := false
 var day := 1
@@ -89,7 +89,7 @@ var game_over := false
 # On-screen virtual joystick for Android. Drag in the lower-left control zone.
 var virtual_axis := Vector2.ZERO
 var joystick_touch_index := -1
-var joystick_center := Vector2(112.0, 600.0)
+var joystick_center := Vector2(205.0, 735.0)
 var joystick_radius := 72.0
 # Illustrated room backplates and a 4-direction / 4-frame survivor sprite sheet.
 var room_textures: Dictionary = {}
@@ -110,7 +110,7 @@ var aim_touch_index := -1
 var casing_particles: Array[Dictionary] = []
 var turret_recoil := 0.0
 var turret_angle := 0.0
-const TURRET_PIVOT := Vector2(768.0, 785.0)
+const TURRET_PIVOT := Vector2(820.0, 815.0)
 # Balcony defense mode: real-time turret combat state.
 var defense_mode := false
 var defense_wave := 1
@@ -143,6 +143,8 @@ var main_hotspots: Array[Control] = []
 var dynamic_counters: Dictionary = {}
 var hub_overlay_controls: Array[Control] = []
 var survivor_texture: Texture2D
+var turret_texture: Texture2D
+var zombie_texture: Texture2D
 var animation_clock := 0.0
 var animation_frame := 0
 var facing_row := 0 # 0 down, 1 left, 2 right, 3 up
@@ -155,8 +157,8 @@ var stair_path_index := 0
 var stair_transition_from := 1
 var stair_transition_progress := 0.0
 var stair_step_bob := 0.0
-const STAIR_LANDINGS := [Vector2(275.0, 625.0), Vector2(275.0, 485.0), Vector2(275.0, 295.0)]
-const FLOOR_CENTERS_Y := [620.0, 420.0, 220.0]
+const STAIR_LANDINGS := [Vector2(560.0, 680.0), Vector2(560.0, 470.0), Vector2(560.0, 250.0)]
+const FLOOR_CENTERS_Y := [680.0, 470.0, 250.0]
 # v0.21: ten additional survival systems.
 var weather := "ЯСНО"
 var noise_level := 0.0
@@ -259,40 +261,27 @@ func _build_ui() -> void:
 		layer.add_child(node)
 
 	# Dynamic counters cover only the numeric portions of the approved header art.
-	_add_dynamic_counter(layer, "day", Rect2(385, 5, 78, 40), 15)
-	_add_dynamic_counter(layer, "health", Rect2(615, 8, 72, 30), 15)
-	_add_dynamic_counter(layer, "energy", Rect2(765, 8, 76, 30), 15)
-	_add_dynamic_counter(layer, "hunger", Rect2(915, 8, 72, 30), 15)
-	_add_dynamic_counter(layer, "thirst", Rect2(1050, 8, 72, 30), 15)
-	_add_dynamic_counter(layer, "ammo", Rect2(1175, 8, 42, 30), 15)
-	_add_dynamic_counter(layer, "wood", Rect2(1270, 8, 48, 30), 15)
-	_add_dynamic_counter(layer, "metal", Rect2(1380, 8, 42, 30), 15)
-	_add_dynamic_counter(layer, "medkits", Rect2(1480, 8, 42, 30), 15)
-	# Left navigation — hit areas match the approved image, not generic buttons.
-	_add_hotspot(layer, Rect2(4, 80, 164, 100), "Убежище", func(): _set_message("Ты находишься в убежище."))
-	_add_hotspot(layer, Rect2(4, 181, 164, 55), "Крафт", _craft_trap)
-	_add_hotspot(layer, Rect2(4, 238, 164, 55), "Инвентарь", func(): _set_message("Запасы: дерево %d, еда %d, вода %d, металл %d, аптечки %d." % [wood, food, water, scrap, medkits]))
-	_add_hotspot(layer, Rect2(4, 295, 164, 55), "Радио", _use_radio)
-	_add_hotspot(layer, Rect2(4, 352, 164, 55), "Карта", _explore_island)
-	_add_hotspot(layer, Rect2(4, 409, 164, 55), "Задачи", _journal_update)
-	_add_hotspot(layer, Rect2(4, 466, 164, 55), "Дневник", _journal_update)
-	_add_hotspot(layer, Rect2(4, 523, 164, 60), "Развитие", _upgrade_workshop)
-
-	# Main room hotspots. The image remains intact; taps invoke real game logic.
-
-	# Right-side objectives and threat panel.
-	_add_hotspot(layer, Rect2(1215, 470, 315, 165), "Текущие задачи", _journal_update)
-	_add_hotspot(layer, Rect2(1215, 640, 315, 75), "Уровень угрозы", _defend_shelter)
-
-	# Bottom action tiles: exact clickable bounds of the six illustrated buttons.
-	_add_hotspot(layer, Rect2(395, 728, 175, 132), "Собрать ресурсы", _gather_wood)
-	_add_hotspot(layer, Rect2(575, 728, 175, 132), "Разведка", _scout_shore)
-	_add_hotspot(layer, Rect2(755, 728, 190, 132), "Улучшения", _upgrade_barricades)
-	_add_hotspot(layer, Rect2(950, 728, 195, 132), "Исследования", _upgrade_workshop)
-	_add_hotspot(layer, Rect2(1150, 728, 190, 132), "Оборона", _enter_balcony_defense)
-	_add_hotspot(layer, Rect2(1345, 728, 185, 132), "Отдых", _rest)
-	_add_hotspot(layer, Rect2(1480, 0, 56, 62), "Настройки", _toggle_action_panel)
-
+	_add_dynamic_counter(layer, "day", Rect2(410, 5, 95, 42), 15)
+	_add_dynamic_counter(layer, "health", Rect2(610, 8, 92, 30), 15)
+	_add_dynamic_counter(layer, "hunger", Rect2(790, 8, 90, 30), 15)
+	_add_dynamic_counter(layer, "thirst", Rect2(945, 8, 90, 30), 15)
+	_add_dynamic_counter(layer, "energy", Rect2(1120, 8, 90, 30), 15)
+	# Resources not shown in the compact approved header remain data-only.
+	_add_dynamic_counter(layer, "ammo", Rect2(-500, -500, 1, 1), 1)
+	_add_dynamic_counter(layer, "wood", Rect2(-500, -500, 1, 1), 1)
+	_add_dynamic_counter(layer, "metal", Rect2(-500, -500, 1, 1), 1)
+	_add_dynamic_counter(layer, "medkits", Rect2(-500, -500, 1, 1), 1)
+	# The right-side action list has been removed from the hub.
+	# Main hub controls match the approved bottom command strip.
+	_add_hotspot(layer, Rect2(18, 770, 170, 90), "Карта", _explore_island)
+	_add_hotspot(layer, Rect2(195, 770, 170, 90), "Охрана", _defend_shelter)
+	_add_hotspot(layer, Rect2(372, 770, 170, 90), "Строительство", _upgrade_barricades)
+	_add_hotspot(layer, Rect2(548, 770, 170, 90), "Исследования", _upgrade_workshop)
+	_add_hotspot(layer, Rect2(725, 770, 180, 90), "Производство", _work)
+	_add_hotspot(layer, Rect2(910, 770, 180, 90), "Инвентарь", func(): _set_message("Запасы: дерево %d, еда %d, вода %d, металл %d, аптечки %d." % [wood, food, water, scrap, medkits]))
+	_add_hotspot(layer, Rect2(1098, 770, 180, 90), "Журнал", _journal_update)
+	_add_hotspot(layer, Rect2(1290, 770, 240, 90), "Оборона", _enter_balcony_defense)
+	_add_hotspot(layer, Rect2(1465, 0, 70, 64), "Настройки", _toggle_action_panel)
 	# Balcony defense: one left-side aiming zone and one right-side hold-to-fire control.
 	_add_defense_hotspot(layer, Rect2(14, 105, 205, 78), "В УБЕЖИЩЕ", _leave_balcony_defense)
 	var fire_button := _add_defense_hotspot(layer, Rect2(1300, 650, 210, 190), "ОГОНЬ", _fire_machinegun)
@@ -309,8 +298,8 @@ func _build_ui() -> void:
 	defense_status_label.visible = false
 	layer.add_child(defense_status_label)
 	defense_ammo_label = Label.new()
-	defense_ammo_label.position = Vector2(28, 205)
-	defense_ammo_label.size = Vector2(280, 42)
+	defense_ammo_label.position = Vector2(1325, 525)
+	defense_ammo_label.size = Vector2(185, 42)
 	defense_ammo_label.add_theme_font_size_override("font_size", 20)
 	defense_ammo_label.add_theme_color_override("font_color", Color("ffe18b"))
 	defense_ammo_label.visible = false
@@ -365,50 +354,8 @@ func _build_ui() -> void:
 	stair_down_button.visible = false
 	layer.add_child(stair_down_button)
 
-	# Secondary action drawer, opened from the settings/overflow hotspot.
-	var action_frame := PanelContainer.new()
-	action_frame.name = "AllActionsPanel"
-	action_frame.position = Vector2(1080, 90)
-	action_frame.size = Vector2(420, 620)
-	action_frame.visible = false
-	action_frame.add_theme_stylebox_override("panel", _ui_panel_style(Color("17130f", 0.97), Color("a98551")))
-	layer.add_child(action_frame)
-	hub_overlay_controls.append(action_frame)
-	var scroll := ScrollContainer.new()
-	action_frame.add_child(scroll)
-	action_panel = VBoxContainer.new()
-	action_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.add_child(action_panel)
-	_add_action_button("Поесть", _eat)
-	_add_action_button("Выпить воды", _drink)
-	_add_action_button("Отдохнуть 2 часа", _rest)
-	_add_action_button("Поработать 1 час", _work)
-	_add_action_button("Заготовить дрова", _gather_wood)
-	_add_action_button("Набрать воду", _collect_water)
-	_add_action_button("Приготовить еду", _cook_meal)
-	_add_action_button("Изготовить ловушку", _craft_trap)
-	_add_action_button("Собрать аптечку", _craft_medkit)
-	_add_action_button("Использовать аптечку", _use_medkit)
-	_add_action_button("Проверить берег", _scout_shore)
-	_add_action_button("Рыбачить у берега", _fish)
-	_add_action_button("Поискать припасы", _scavenge)
-	_add_action_button("Очистить воду", _purify_water)
-	_add_action_button("Улучшить баррикады", _upgrade_barricades)
-	_add_action_button("Исследовать остров", _explore_island)
-	_add_action_button("Записать в журнал", _journal_update)
-	_add_action_button("Собрать ягоды и травы", _forage)
-	_add_action_button("Ухаживать за огородом", _tend_garden)
-	_add_action_button("Изготовить копьё", _craft_spear)
-	_add_action_button("Охотиться на мелкую дичь", _hunt)
-	_add_action_button("Собрать дождевую воду", _collect_rainwater)
-	_add_action_button("Проверить радиомаяк", _use_radio)
-	_add_action_button("Улучшить мастерскую", _upgrade_workshop)
-	_add_action_button("Проверить медицинское состояние", _treat_injury)
-	_add_action_button("Разобрать найденные припасы", _process_salvage)
-	_add_action_button("Отбиться от зомби", _defend_shelter)
-	_add_action_button("Починить укрепления", _repair_shelter)
-	_add_action_button("Сохранить игру", _save_game)
-	_add_action_button("Начать заново", _new_game)
+	# The former right-side action drawer is intentionally removed. Actions are
+	# reached through the illustrated hub controls and contextual room actions.
 
 	for meter_name in ["Здоровье", "Голод", "Жажда", "Энергия", "Прочность"]:
 		var meter := ProgressBar.new()
@@ -527,7 +474,7 @@ func _set_defense_controls_visible(show_controls: bool) -> void:
 	if is_instance_valid(defense_ammo_label):
 		defense_ammo_label.visible = show_controls
 	if is_instance_valid(room_title_label):
-		room_title_label.visible = room_mode and not show_controls
+		room_title_label.visible = false
 	if is_instance_valid(room_story_label):
 		room_story_label.visible = room_mode and not show_controls
 	if is_instance_valid(stair_up_button) and room_mode:
@@ -561,7 +508,7 @@ func _enter_balcony_defense() -> void:
 	casing_particles.clear()
 	turret_recoil = 0.0
 	_set_defense_controls_visible(true)
-	_set_message("Побережье пока пусто. Первые заражённые появятся из воды.")
+	_set_message("Заражённые выходят из воды. Наводи пулемёт вручную и не подпускай их к укреплениям.")
 	_update_defense_hud()
 	queue_redraw()
 
@@ -595,9 +542,9 @@ func _fire_machinegun() -> void:
 	var hit_distance := INF
 	for i in range(defense_targets.size()):
 		var target: Dictionary = defense_targets[i]
-		var center: Vector2 = target["pos"] + Vector2(0, -22.0 * float(target["scale"]))
+		var center: Vector2 = target["pos"] + Vector2(0, -78.0 * float(target["scale"]))
 		var distance := _distance_to_segment(center, muzzle, shot_end)
-		var radius := 24.0 * float(target["scale"])
+		var radius := 46.0 * float(target["scale"])
 		if distance <= radius and distance < hit_distance:
 			hit_index = i
 			hit_distance = distance
@@ -639,7 +586,7 @@ func _distance_to_segment(point: Vector2, start: Vector2, finish: Vector2) -> fl
 
 func _get_turret_muzzle_position() -> Vector2:
 	var direction := (aim_position - TURRET_PIVOT).normalized()
-	return TURRET_PIVOT + direction * 210.0
+	return TURRET_PIVOT + direction * 330.0
 
 func _reload_machinegun() -> void:
 	# Kept for compatibility with older saves; the balcony gun is permanently belt-fed.
@@ -880,7 +827,8 @@ func _draw_room_view() -> void:
 	if texture != null:
 		draw_texture_rect(texture, Rect2(0, 0, 1536, 864), false)
 	else:
-		_draw_procedural_room(selected_room_id)
+		push_error("Нет утверждённой графики для комнаты: " + selected_room_id)
+		draw_rect(Rect2(0, 0, 1536, 864), Color("211a14"), true)
 	# Darken the upper/lower edges so room controls read clearly without covering the room.
 	draw_rect(Rect2(0, 0, 1536, 78), Color(0.035, 0.025, 0.018, 0.80), true)
 	draw_rect(Rect2(0, 690, 1536, 174), Color(0.035, 0.025, 0.018, 0.36), true)
@@ -890,72 +838,6 @@ func _draw_room_view() -> void:
 		draw_texture_rect_region(survivor_texture, destination, source)
 	draw_string(ThemeDB.fallback_font, Vector2(40, 205), "←  ПЕРЕМЕЩЕНИЕ ПО ПОЛУ  →", HORIZONTAL_ALIGNMENT_LEFT, 420, 18, Color("f4d7a7"))
 	draw_string(ThemeDB.fallback_font, Vector2(1120, 700), "ДЕЙСТВИЕ В ПОМЕЩЕНИИ", HORIZONTAL_ALIGNMENT_CENTER, 330, 17, Color("f4d7a7"))
-
-func _draw_procedural_room(room_id: String) -> void:
-	var wall := Color("49372a")
-	var floor := Color("76553b")
-	if room_id == "greenhouse":
-		wall = Color("34463a")
-		floor = Color("6a5739")
-	elif room_id == "techblock":
-		wall = Color("35434a")
-		floor = Color("4d514a")
-	elif room_id == "lookout":
-		wall = Color("39434b")
-		floor = Color("6b5845")
-	draw_rect(Rect2(0, 0, 1536, 590), wall, true)
-	draw_rect(Rect2(0, 590, 1536, 274), floor, true)
-	for beam_x in range(0, 1536, 190):
-		draw_rect(Rect2(beam_x, 0, 16, 590), Color("241c17"), true)
-		draw_rect(Rect2(beam_x + 16, 0, 5, 590), Color("a47a4b"), true)
-	for seam in range(0, 1536, 90):
-		draw_line(Vector2(seam, 595), Vector2(seam, 864), Color("3a291e"), 3.0)
-	if room_id == "greenhouse":
-		for row in range(3):
-			var y := 300.0 + float(row) * 125.0
-			draw_rect(Rect2(150, y, 1230, 28), Color("4a3021"), true)
-			for plant in range(12):
-				var x := 185.0 + float(plant) * 98.0
-				draw_rect(Rect2(x, y - 52, 54, 52), Color("46372a"), true)
-				draw_line(Vector2(x + 27, y - 4), Vector2(x + 27, y - 48), Color("7fa35b"), 7.0)
-				draw_line(Vector2(x + 27, y - 25), Vector2(x + 8, y - 39), Color("9abd65"), 6.0)
-				draw_line(Vector2(x + 27, y - 30), Vector2(x + 46, y - 44), Color("9abd65"), 6.0)
-	elif room_id == "techblock":
-		for i in range(4):
-			var x := 180.0 + float(i) * 330.0
-			draw_rect(Rect2(x, 235, 180, 350), Color("69777a"), true)
-			draw_rect(Rect2(x + 16, 250, 148, 320), Color("26343a"), true)
-			draw_circle(Vector2(x + 90, 340), 42, Color("75a6a3"))
-			draw_circle(Vector2(x + 90, 340), 30, Color("263e43"))
-			draw_line(Vector2(x + 90, 382), Vector2(x + 90, 500), Color("c39a5c"), 8.0)
-	else:
-		draw_rect(Rect2(120, 170, 1290, 410), Color("1d282f"), true)
-		if room_id == "lookout":
-			# Wide reinforced observation window over the lagoon and distant ruined city.
-			for band in range(12):
-				var sky_color := Color("3b4d62").lerp(Color("e59a62"), float(band) / 11.0)
-				draw_rect(Rect2(145, 190 + band * 17, 1240, 18), sky_color, true)
-			draw_circle(Vector2(1160, 280), 45, Color("ffd38a"))
-			draw_rect(Rect2(145, 385, 1240, 165), Color("315968"), true)
-			for building in range(18):
-				var bx := 180.0 + float(building) * 67.0
-				var bh := 45.0 + float((building * 37) % 115)
-				draw_rect(Rect2(bx, 385.0 - bh, 42.0, bh), Color("34343a"), true)
-			for wave in range(18):
-				var wy := 400.0 + float(wave) * 8.0
-				draw_line(Vector2(160 + wave * 11, wy), Vector2(1370, wy - 2), Color(0.78, 0.88, 0.85, 0.24), 2.0)
-			draw_rect(Rect2(145, 190, 1240, 360), Color("d3b17b"), false, 12.0)
-			for x in range(170, 1380, 310):
-				draw_line(Vector2(x, 190), Vector2(x, 550), Color("d3b17b"), 9.0)
-			draw_line(Vector2(145, 370), Vector2(1385, 370), Color("d3b17b"), 8.0)
-		else:
-			draw_rect(Rect2(145, 190, 1240, 360), Color("8b9a91"), true)
-			draw_rect(Rect2(145, 190, 1240, 360), Color("334b59", 0.35), true)
-			for x in range(170, 1380, 150):
-				draw_line(Vector2(x, 190), Vector2(x, 550), Color("d3b17b"), 8.0)
-			draw_line(Vector2(145, 370), Vector2(1385, 370), Color("d3b17b"), 8.0)
-		draw_rect(Rect2(540, 570, 470, 40), Color("493525"), true)
-		draw_rect(Rect2(560, 550, 430, 20), Color("b18a58"), true)
 
 func _select_and_run_room(room_id: String, room_name: String, callback: Callable) -> void:
 	selected_room_id = room_id
@@ -1007,9 +889,7 @@ func _add_action_tile(parent: HBoxContainer, caption: String, callback: Callable
 	parent.add_child(button)
 
 func _toggle_action_panel() -> void:
-	var panel := get_node_or_null("GameHUD/AllActionsPanel")
-	if panel != null:
-		panel.visible = not panel.visible
+	_set_message("Настройки убежища. Игровой список действий больше не перекрывает локацию.")
 
 func _add_action_button(caption: String, callback: Callable) -> void:
 	var b := Button.new()
@@ -1035,7 +915,7 @@ func _set_floor(index: int) -> void:
 
 func _use_stairs_up() -> void:
 	if player_pos.distance_to(STAIR_LANDINGS[current_floor]) > 135.0:
-		_set_message("Подойди к винтовой лестнице слева.")
+		_set_message("Подойди к винтовой лестнице в центре убежища.")
 		return
 	if current_floor >= 2:
 		_set_message("Это самый верхний этаж. Выше лестницы нет.")
@@ -1044,7 +924,7 @@ func _use_stairs_up() -> void:
 
 func _use_stairs_down() -> void:
 	if player_pos.distance_to(STAIR_LANDINGS[current_floor]) > 135.0:
-		_set_message("Подойди к винтовой лестнице слева.")
+		_set_message("Подойди к винтовой лестнице в центре убежища.")
 		return
 	if current_floor <= 0:
 		_set_message("Это нижний этаж. Ниже лестницы нет.")
@@ -1065,10 +945,10 @@ func _begin_stair_transition(destination: int) -> void:
 	var high_y := maxf(start.y, finish.y)
 	var middle_y := (low_y + high_y) * 0.5
 	var climb_points: Array[Vector2] = [
-		Vector2(275.0, high_y), Vector2(315.0, high_y - 34.0),
-		Vector2(315.0, middle_y + 22.0), Vector2(265.0, middle_y),
-		Vector2(235.0, middle_y - 28.0), Vector2(235.0, low_y + 34.0),
-		Vector2(275.0, low_y)
+		Vector2(560.0, high_y), Vector2(600.0, high_y - 34.0),
+		Vector2(600.0, middle_y + 22.0), Vector2(550.0, middle_y),
+		Vector2(520.0, middle_y - 28.0), Vector2(520.0, low_y + 34.0),
+		Vector2(560.0, low_y)
 	]
 	if destination > current_floor:
 		stair_path_points = climb_points
@@ -1206,7 +1086,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _is_walkable_screen_point(point: Vector2) -> bool:
 	# The bunker illustration spans three distinct horizontal walkable levels.
-	return point.y >= 145.0 and point.y <= 710.0 and point.x >= 175.0 and point.x <= 1210.0
+	return point.y >= 135.0 and point.y <= 760.0 and point.x >= 150.0 and point.x <= 1460.0
 
 func _walkable_rectangles() -> Array[Rect2]:
 	var areas: Array[Rect2] = []
@@ -1224,9 +1104,9 @@ func _walkable_rectangles() -> Array[Rect2]:
 		var b: Rect2 = rects[int(link[1])]
 		areas.append(Rect2(a.end.x - 2.0, a.get_center().y - 22.0, b.position.x - a.end.x + 4.0, 44.0))
 	# Stairwell and landing connect the three floors.
-	areas.append(Rect2(205.0, 160.0, 145.0, 545.0))
+	areas.append(Rect2(485.0, 145.0, 155.0, 620.0))
 	var floor_y: float = float(FLOOR_CENTERS_Y[current_floor])
-	areas.append(Rect2(320.0, floor_y - 25.0, 115.0, 50.0))
+	areas.append(Rect2(500.0, floor_y - 25.0, 125.0, 50.0))
 	return areas
 
 func _can_stand_at(point: Vector2) -> bool:
@@ -1869,10 +1749,10 @@ func _repair_shelter() -> void:
 	_update_ui()
 
 func _new_game() -> void:
-	current_floor = 1
+	current_floor = 2
 	selected_room_id = "living"
 	selected_room_name = "ГОСТИНАЯ"
-	player_pos = Vector2(640, 420)
+	player_pos = Vector2(820, 250)
 	target_pos = Vector2.ZERO
 	moving = false
 	day = 1
@@ -1966,10 +1846,10 @@ func _update_ui() -> void:
 		dynamic_counters["energy"].text = "%d/100" % int(energy)
 		dynamic_counters["hunger"].text = "%d/100" % int(hunger)
 		dynamic_counters["thirst"].text = "%d/100" % int(thirst)
-		dynamic_counters["ammo"].text = str(ammo_loaded)
-		dynamic_counters["wood"].text = str(wood)
-		dynamic_counters["metal"].text = str(scrap)
-		dynamic_counters["medkits"].text = str(medkits)
+		if dynamic_counters.has("ammo"): dynamic_counters["ammo"].text = str(ammo_loaded)
+		if dynamic_counters.has("wood"): dynamic_counters["wood"].text = str(wood)
+		if dynamic_counters.has("metal"): dynamic_counters["metal"].text = str(scrap)
+		if dynamic_counters.has("medkits"): dynamic_counters["medkits"].text = str(medkits)
 
 func _room_action_caption() -> String:
 	var story: Dictionary = ROOM_STORIES.get(selected_room_id, ROOM_STORIES["living"])
@@ -2012,7 +1892,7 @@ func _save_game_silent() -> void:
 	cfg.set_value("world", "zombies", zombies)
 	cfg.set_value("world", "shelter_integrity", shelter_integrity)
 	cfg.set_value("world", "quest_flags", quest_flags)
-	cfg.set_value("world", "version", 10)
+	cfg.set_value("world", "version", 11)
 	cfg.set_value("island", "location", island_location)
 	cfg.set_value("island", "explored_locations", explored_locations)
 	cfg.set_value("island", "berries", berries)
@@ -2035,6 +1915,7 @@ func _save_game_silent() -> void:
 func _load_game() -> void:
 	var cfg := ConfigFile.new()
 	if cfg.load(SAVE_PATH) != OK: return
+	var save_version := int(cfg.get_value("world", "version", 10))
 	current_floor = int(cfg.get_value("player", "floor", 2))
 	selected_room_id = str(cfg.get_value("player", "selected_room_id", "living"))
 	selected_room_name = str(cfg.get_value("player", "selected_room_name", "ГОСТИНАЯ"))
@@ -2045,8 +1926,33 @@ func _load_game() -> void:
 	hunger = float(cfg.get_value("player", "hunger", 85.0))
 	thirst = float(cfg.get_value("player", "thirst", 80.0))
 	energy = float(cfg.get_value("player", "energy", 90.0))
-	player_pos = Vector2(float(cfg.get_value("player", "x", 640.0)), float(cfg.get_value("player", "y", 220.0)))
+	player_pos = Vector2(float(cfg.get_value("player", "x", 820.0)), float(cfg.get_value("player", "y", 250.0)))
 	current_floor = clampi(current_floor, 0, 2)
+	# v0.35 map migration: preserve the survivor's relative room position and
+	# remap the old left-hand stair / room ordering to the approved new cutaway.
+	if save_version < 11:
+		if current_floor == 0:
+			if selected_room_id == "storage": selected_room_id = "greenhouse"
+			elif selected_room_id == "greenhouse": selected_room_id = "workshop"
+			elif selected_room_id == "techblock": selected_room_id = "storage"
+		elif current_floor == 1 and selected_room_id == "workshop":
+			selected_room_id = "techblock"
+		var old_stair := player_pos.x < 355.0
+		var old_column := 0 if player_pos.x < 505.0 else (1 if player_pos.x < 775.0 else 2)
+		var old_centers := [370.0, 640.0, 910.0]
+		var new_centers := [330.0, 830.0, 1260.0]
+		var old_floor_y := [620.0, 420.0, 220.0]
+		var new_floor_y := [680.0, 470.0, 250.0]
+		if old_stair:
+			player_pos = STAIR_LANDINGS[current_floor]
+		else:
+			player_pos.x = clampf(new_centers[old_column] + player_pos.x - old_centers[old_column], new_centers[old_column] - 145.0, new_centers[old_column] + 145.0)
+			player_pos.y = clampf(new_floor_y[current_floor] + player_pos.y - old_floor_y[current_floor], new_floor_y[current_floor] - 80.0, new_floor_y[current_floor] + 80.0)
+	# Refresh the displayed room label from the current floor's new room graph.
+	for room in LEVELS[current_floor]["rooms"]:
+		if str(room["id"]) == selected_room_id:
+			selected_room_name = str(room["name"])
+			break
 	wood = int(cfg.get_value("inventory", "wood", 8))
 	food = int(cfg.get_value("inventory", "food", 5))
 	water = int(cfg.get_value("inventory", "water", 4))
@@ -2105,7 +2011,7 @@ func _load_art_assets() -> void:
 	var balcony_path := "res://art/ui/approved_balcony.png"
 	if ResourceLoader.exists(balcony_path):
 		balcony_ui_texture = load(balcony_path)
-	var ids := ["bedroom", "living", "kitchen", "workshop", "storage", "arsenal", "guest1", "guest2"]
+	var ids := ["bedroom", "living", "kitchen", "workshop", "storage", "arsenal", "greenhouse", "techblock", "lookout"]
 	for room_id in ids:
 		var path := "res://art/rooms/%s.png" % room_id
 		if ResourceLoader.exists(path):
@@ -2113,6 +2019,12 @@ func _load_art_assets() -> void:
 	var character_path := "res://art/characters/survivor_sheet.png"
 	if ResourceLoader.exists(character_path):
 		survivor_texture = load(character_path)
+	var turret_path := "res://art/defense/turret.png"
+	if ResourceLoader.exists(turret_path):
+		turret_texture = load(turret_path)
+	var zombie_path := "res://art/defense/zombie.png"
+	if ResourceLoader.exists(zombie_path):
+		zombie_texture = load(zombie_path)
 
 func _update_facing(direction: Vector2) -> void:
 	if absf(direction.x) > absf(direction.y):
@@ -2130,7 +2042,6 @@ func _draw() -> void:
 	else:
 		draw_rect(Rect2(Vector2.ZERO, Vector2(1536, 864)), Color("211a14"), true)
 	if defense_mode:
-		_draw_clean_balcony_panorama()
 		_draw_machinegun_turret()
 		# Large, progressively growing infected silhouettes enter only from the water.
 		for target in defense_targets:
@@ -2150,14 +2061,6 @@ func _draw() -> void:
 		draw_line(aim_position + Vector2(12, 0), aim_position + Vector2(38, 0), reticle_color, 2.0)
 		draw_line(aim_position + Vector2(0, -38), aim_position + Vector2(0, -12), reticle_color, 2.0)
 		draw_line(aim_position + Vector2(0, 12), aim_position + Vector2(0, 38), reticle_color, 2.0)
-		draw_circle(Vector2(160, 735), 94.0, Color(0.035, 0.025, 0.018, 0.66))
-		draw_arc(Vector2(160, 735), 94.0, 0.0, TAU, 48, Color("d1ad73"), 4.0)
-		draw_circle(Vector2(160, 735), 34.0, Color("96724a", 0.92))
-		draw_arc(Vector2(160, 735), 34.0, 0.0, TAU, 32, Color("f0d2a0"), 3.0)
-		draw_string(ThemeDB.fallback_font, Vector2(42, 850), "НАВЕДЕНИЕ", HORIZONTAL_ALIGNMENT_LEFT, 220, 16, Color("ffe2a4"))
-		draw_circle(Vector2(1405, 745), 90.0, Color("5a1c12", 0.90))
-		draw_arc(Vector2(1405, 745), 90.0, 0.0, TAU, 48, Color("e6a04d"), 5.0)
-		draw_string(ThemeDB.fallback_font, Vector2(1310, 850), "ОГОНЬ", HORIZONTAL_ALIGNMENT_CENTER, 190, 18, Color("ffe2a4"))
 	else:
 		if survivor_texture != null:
 			var source := Rect2(float(animation_frame) * 128.0, float(facing_row) * 160.0, 128.0, 160.0)
@@ -2166,157 +2069,31 @@ func _draw() -> void:
 			draw_texture_rect_region(survivor_texture, destination, source)
 		_draw_virtual_joystick()
 
-func _draw_clean_balcony_panorama() -> void:
-	# The approved balcony plate contains baked-in attackers and a legacy reload panel.
-	# Repaint the sea/beach and lower control strip; live enemies and controls are drawn later.
-	draw_rect(Rect2(0, 710, 1536, 154), Color(0.075, 0.052, 0.034, 0.96), true)
-	draw_rect(Rect2(0, 710, 1536, 154), Color("a98551"), false, 3.0)
-	draw_rect(Rect2(285, 310, 1251, 235), Color("31596a"), true)
-	for band in range(15):
-		var y := 315.0 + float(band) * 15.0
-		var c := Color("456f7a").lerp(Color("244653"), float(band) / 14.0)
-		draw_rect(Rect2(285, y, 1251, 16), c, true)
-	for wave in range(28):
-		var y := 330.0 + float((wave * 17) % 205)
-		var x := 300.0 + float((wave * 83) % 1160)
-		draw_line(Vector2(x, y), Vector2(x + 70.0 + float(wave % 4) * 12.0, y - 3.0), Color(0.78, 0.88, 0.84, 0.28), 2.0)
-		draw_line(Vector2(x + 20, y + 5), Vector2(x + 52, y + 4), Color(0.95, 0.86, 0.72, 0.20), 1.0)
-	draw_polygon(PackedVector2Array([Vector2(285, 520), Vector2(1536, 500), Vector2(1536, 650), Vector2(285, 650)]), PackedColorArray([Color("9b805d"), Color("c2a178"), Color("907451"), Color("705b43")]))
-	for rock in range(25):
-		var x := 300.0 + float((rock * 71) % 1200)
-		var y := 535.0 + float((rock * 29) % 100)
-		draw_circle(Vector2(x + 8.0, y + 5.0), 5.0 + float(rock % 3) * 2.0, Color("554c40"))
-	# A small yacht remains in the lagoon as a landmark.
-	draw_polygon(PackedVector2Array([Vector2(370, 415), Vector2(490, 415), Vector2(470, 438), Vector2(390, 438)]), PackedColorArray([Color("202a30"), Color("202a30"), Color("10191f"), Color("10191f")]))
-	draw_rect(Rect2(408, 392, 38, 23), Color("d8d0bd"), true)
-	draw_line(Vector2(427, 392), Vector2(427, 365), Color("292c2e"), 3.0)
-	draw_line(Vector2(427, 367), Vector2(455, 390), Color("e0d7c5"), 2.0)
-
 func _draw_machinegun_turret() -> void:
 	var direction := (aim_position - TURRET_PIVOT).normalized()
 	turret_angle = Vector2.UP.angle_to(direction)
-	var recoil_offset := turret_recoil * 9.0
-	draw_set_transform(TURRET_PIVOT + direction * recoil_offset, turret_angle, Vector2.ONE)
-	# Mount and traversing ring.
-	draw_rect(Rect2(-112, -18, 224, 42), Color("252522"), true)
-	draw_rect(Rect2(-92, -25, 184, 12), Color("8c6b3f"), true)
-	draw_rect(Rect2(-28, -206, 56, 190), Color("242a2b"), true)
-	draw_rect(Rect2(-20, -202, 40, 174), Color("536064"), true)
-	draw_rect(Rect2(-11, -205, 22, 182), Color("a5a69a"), true)
-	draw_rect(Rect2(-35, -184, 70, 38), Color("343b3b"), true)
-	draw_rect(Rect2(-24, -230, 48, 35), Color("1b2223"), true)
-	draw_rect(Rect2(-18, -246, 36, 25), Color("9b7a43"), true)
-	draw_rect(Rect2(-9, -262, 18, 20), Color("202525"), true)
-	draw_rect(Rect2(-74, -95, 46, 30), Color("3b403d"), true)
-	draw_rect(Rect2(28, -95, 46, 30), Color("3b403d"), true)
-	draw_rect(Rect2(-112, -12, 224, 12), Color("b18a4f"), true)
-	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	var recoil_offset := turret_recoil * 8.0
+	if turret_texture != null:
+		draw_set_transform(TURRET_PIVOT + direction * recoil_offset, turret_angle, Vector2.ONE)
+		draw_texture_rect(turret_texture, Rect2(-200.0, -420.0, 400.0, 420.0), false)
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	if muzzle_flash_timer > 0.0:
 		var muzzle := _get_turret_muzzle_position()
 		draw_line(muzzle, aim_position, Color(1.0, 0.78, 0.34, 0.55), 3.0)
-		draw_set_transform(muzzle, turret_angle, Vector2.ONE)
-		draw_circle(Vector2.ZERO, 36.0, Color(1.0, 0.56, 0.12, 0.24))
-		draw_circle(Vector2.ZERO, 21.0, Color(1.0, 0.78, 0.28, 0.62))
-		draw_polygon(PackedVector2Array([Vector2(-13, 0), Vector2(-5, -32), Vector2(0, -10), Vector2(13, -28), Vector2(8, 0), Vector2(25, 10), Vector2(2, 11), Vector2(-10, 25)]), PackedColorArray([Color("ff8a1f"), Color("fff0a0"), Color("ff9a23"), Color("fff0a0"), Color("ffb12d"), Color("fff0a0"), Color("ff8b1e"), Color("ffcf59")]))
-		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+		draw_circle(muzzle, 28.0, Color(1.0, 0.56, 0.12, 0.24))
+		draw_circle(muzzle, 16.0, Color(1.0, 0.78, 0.28, 0.62))
 
 func _draw_zombie_target(target: Dictionary) -> void:
 	var pos: Vector2 = target["pos"]
 	var scale_factor := float(target["scale"])
-	var skin := Color("777b68")
-	var clothes := Color("403d36") if int(target["hp"]) <= 1 else Color("4a5149")
-	var head := pos + Vector2(0, -43.0 * scale_factor)
-	draw_rect(Rect2(pos.x - 19.0 * scale_factor, pos.y - 15.0 * scale_factor, 38.0 * scale_factor, 62.0 * scale_factor), clothes, true)
-	draw_line(pos + Vector2(-9, 8) * scale_factor, pos + Vector2(-17, 48) * scale_factor, clothes.darkened(0.2), 10.0 * scale_factor)
-	draw_line(pos + Vector2(9, 8) * scale_factor, pos + Vector2(18, 48) * scale_factor, clothes.darkened(0.2), 10.0 * scale_factor)
-	draw_line(pos + Vector2(-13, -5) * scale_factor, pos + Vector2(-34, 22) * scale_factor, skin, 9.0 * scale_factor)
-	draw_line(pos + Vector2(13, -5) * scale_factor, pos + Vector2(34, 18) * scale_factor, skin, 9.0 * scale_factor)
-	draw_circle(head, 15.0 * scale_factor, skin)
-	draw_circle(head + Vector2(-5, -2) * scale_factor, 2.8 * scale_factor, Color("b63b2e"))
-	draw_circle(head + Vector2(5, -2) * scale_factor, 2.8 * scale_factor, Color("b63b2e"))
-	draw_line(head + Vector2(-5, 8) * scale_factor, head + Vector2(6, 9) * scale_factor, Color("2a211d"), 3.0 * scale_factor)
+	if zombie_texture != null:
+		var size := Vector2(145.0, 158.0) * scale_factor
+		draw_texture_rect(zombie_texture, Rect2(pos.x - size.x * 0.5, pos.y - size.y, size.x, size.y), false)
+	else:
+		push_error("Нет текстуры заражённого для режима обороны.")
 	if int(target["hp"]) > 1:
-		draw_rect(Rect2(pos.x - 21.0 * scale_factor, pos.y - 80.0 * scale_factor, 42.0 * scale_factor, 5.0 * scale_factor), Color("241512"), true)
-		draw_rect(Rect2(pos.x - 21.0 * scale_factor, pos.y - 80.0 * scale_factor, 21.0 * scale_factor, 5.0 * scale_factor), Color("df3429"), true)
-
-func _draw_coastline_environment() -> void:
-	# v0.27: richer illustrated island panorama framing the playable bunker.
-	var sky := Rect2(1018.0, 78.0, 262.0, 565.0)
-	for band in range(32):
-		var t := float(band) / 31.0
-		var c := Color("202b42").lerp(Color("f29a58"), t)
-		draw_rect(Rect2(sky.position.x, sky.position.y + t * sky.size.y, sky.size.x, sky.size.y / 31.0 + 2.0), c, true)
-	# Sunset disc and distant cloud banks.
-	draw_circle(Vector2(1192, 278), 30, Color("ffd27b", 0.95))
-	draw_circle(Vector2(1192, 278), 39, Color("ffc06b", 0.16))
-	for cloud in range(5):
-		var cx := 1040.0 + float(cloud) * 53.0
-		var cy := 160.0 + float((cloud * 23) % 55)
-		draw_line(Vector2(cx, cy), Vector2(cx + 38, cy - 5), Color("f6c19a", 0.20), 7.0)
-	# Ruined skyline with broken rooflines and smoke columns.
-	var skyline := [Vector2(1040, 330), Vector2(1060, 278), Vector2(1080, 312), Vector2(1104, 238), Vector2(1128, 296), Vector2(1152, 258), Vector2(1178, 300), Vector2(1200, 220), Vector2(1225, 286), Vector2(1250, 250)]
-	for i in range(skyline.size()):
-		var q: Vector2 = skyline[i]
-		draw_rect(Rect2(q.x, q.y, 19.0, 360.0 - q.y), Color("30313a"), true)
-		draw_polygon(PackedVector2Array([Vector2(q.x, q.y + 7), Vector2(q.x + 7, q.y - 5), Vector2(q.x + 19, q.y + 4)]), PackedColorArray([Color("292b34"), Color("292b34"), Color("292b34")]))
-		for wy in range(4):
-			draw_rect(Rect2(q.x + 4 + (wy % 2) * 7, q.y + 13.0 + wy * 19.0, 3, 6), Color(0.95, 0.62, 0.31, 0.48), true)
-	# Smoke drifting above the damaged city.
-	for puff in range(4):
-		var smoke_pos := Vector2(1109.0 + puff * 3.0, 220.0 - puff * 22.0)
-		draw_circle(smoke_pos, 10.0 + puff * 2.0, Color(0.24, 0.25, 0.29, 0.30 - puff * 0.045))
-	# Sea, layered waves and foam.
-	draw_rect(Rect2(1018, 360, 262, 190), Color("345b68"), true)
-	for wave in range(15):
-		var yy := 370.0 + wave * 12.0
-		var xx := 1025.0 + float((wave * 37) % 75)
-		draw_line(Vector2(xx, yy), Vector2(1270, yy - 4.0), Color(0.72, 0.82, 0.80, 0.30), 2.0)
-		draw_line(Vector2(xx + 35, yy + 4), Vector2(xx + 75, yy + 2), Color(0.92, 0.83, 0.68, 0.22), 1.0)
-	# Small stranded yacht, kept clear of the beach silhouettes.
-	draw_polygon(PackedVector2Array([Vector2(1120, 424), Vector2(1215, 424), Vector2(1200, 443), Vector2(1134, 443)]), PackedColorArray([Color("202a30"), Color("202a30"), Color("10191f"), Color("10191f")]))
-	draw_rect(Rect2(1150, 405, 34, 19), Color("d8d0bd"), true)
-	draw_rect(Rect2(1158, 397, 17, 8), Color("b7c3c2"), true)
-	draw_line(Vector2(1166, 397), Vector2(1166, 382), Color("292c2e"), 2.0)
-	draw_line(Vector2(1166, 384), Vector2(1180, 394), Color("292c2e"), 2.0)
-	# Narrow beach, rocks and scrub at the base of the cliff.
-	draw_polygon(PackedVector2Array([Vector2(1018, 535), Vector2(1280, 510), Vector2(1280, 643), Vector2(1018, 643)]), PackedColorArray([Color("8b7659"), Color("b49a70"), Color("9a805e"), Color("75634d")]))
-	for rock in range(9):
-		var rx := 1025.0 + float(rock) * 31.0
-		var ry := 535.0 + float((rock * 17) % 77)
-		draw_circle(Vector2(rx, ry), 5.0 + float(rock % 3), Color("4b4840"))
-	# Approaching infected silhouettes.
-	for z in range(9):
-		var zx := 1042.0 + float(z) * 27.0
-		var zy := 560.0 + float((z * 19) % 65)
-		draw_circle(Vector2(zx, zy - 8), 4.0, Color("252321"))
-		draw_line(Vector2(zx, zy - 4), Vector2(zx - 2, zy + 9), Color("252321"), 4.0)
-		draw_line(Vector2(zx - 1, zy + 2), Vector2(zx - 8, zy + 8), Color("252321"), 2.0)
-		draw_line(Vector2(zx - 1, zy + 2), Vector2(zx + 6, zy + 8), Color("252321"), 2.0)
-	draw_rect(sky, Color("d2b184"), false, 4.0)
-	draw_string(ThemeDB.fallback_font, Vector2(1030, 105), "ПОБЕРЕЖЬЕ • ЗОНА УГРОЗЫ", HORIZONTAL_ALIGNMENT_LEFT, 240, 12, Color("fff0d1"))
-
-func _draw_room_structure(r: Rect2, room_id: String) -> void:
-	# Reinforced timber/steel framing makes each chamber read as a carved
-	# architectural space instead of a flat picture tile.
-	var beam := Color("59402e")
-	var highlight := Color("b58a55")
-	draw_line(r.position + Vector2(7, 31), Vector2(r.end.x - 7, r.position.y + 31), beam, 5.0)
-	draw_line(r.position + Vector2(7, 34), Vector2(r.end.x - 7, r.position.y + 34), highlight, 1.0)
-	draw_line(Vector2(r.position.x + 8, r.position.y + 8), Vector2(r.position.x + 8, r.end.y - 8), beam, 5.0)
-	draw_line(Vector2(r.end.x - 8, r.position.y + 8), Vector2(r.end.x - 8, r.end.y - 8), beam, 5.0)
-	# Rivets at the frame corners and a low utility conduit.
-	for corner in [r.position + Vector2(9, 10), r.position + Vector2(ROOM_W - 9, 10), r.position + Vector2(9, ROOM_H - 10), r.position + Vector2(ROOM_W - 9, ROOM_H - 10)]:
-		draw_circle(corner, 2.5, Color("d0ad79"))
-	if room_id in ["workshop", "storage", "arsenal"]:
-		draw_line(Vector2(r.position.x + 18, r.end.y - 17), Vector2(r.end.x - 18, r.end.y - 17), Color("77766b"), 3.0)
-		draw_circle(Vector2(r.position.x + 24, r.end.y - 17), 3.0, Color("d4b77e"))
-
-func _draw_room_badge(r: Rect2, caption: String, selected: bool) -> void:
-	var badge_width := minf(150.0, maxf(92.0, caption.length() * 7.2 + 20.0))
-	var badge_rect := Rect2(r.end.x - badge_width - 12.0, r.position.y + 9.0, badge_width, 23.0)
-	draw_rect(badge_rect, Color("21170f", 0.94), true)
-	draw_rect(badge_rect, Color("e3b85f") if selected else Color("9b7548"), false, 2.0)
-	draw_string(ThemeDB.fallback_font, badge_rect.position + Vector2(7, 16), caption, HORIZONTAL_ALIGNMENT_LEFT, badge_width - 14, 11, Color("ffe2ad") if selected else Color("e5cfaa"))
+		draw_rect(Rect2(pos.x - 22.0 * scale_factor, pos.y - 168.0 * scale_factor, 44.0 * scale_factor, 5.0 * scale_factor), Color("241512"), true)
+		draw_rect(Rect2(pos.x - 22.0 * scale_factor, pos.y - 168.0 * scale_factor, 22.0 * scale_factor, 5.0 * scale_factor), Color("df3429"), true)
 
 func _draw_virtual_joystick() -> void:
 	# Subtle parchment-style touch control, visible on phones and harmless on desktop.
@@ -2326,86 +2103,4 @@ func _draw_virtual_joystick() -> void:
 	draw_circle(joystick_center + knob_offset, 27.0, Color("b18a60", 0.88))
 	draw_arc(joystick_center + knob_offset, 27.0, 0.0, TAU, 32, Color("ead0a5"), 2.0)
 	draw_string(ThemeDB.fallback_font, joystick_center + Vector2(-34, 5), "MOVE", HORIZONTAL_ALIGNMENT_CENTER, 68, 11, Color("f2dfbd"))
-
-func _draw_furniture(r: Rect2, id: String) -> void:
-	var c := r.get_center()
-	# Hand-built, warm rustic furnishing silhouettes. The dark inset and
-	# repeated floor seams make the rooms read as carved stone with timber floors.
-	for row in range(5):
-		var y := r.position.y + 38.0 + float(row) * 22.0
-		draw_line(Vector2(r.position.x + 14, y), Vector2(r.end.x - 14, y), Color(0.18, 0.11, 0.07, 0.28), 1.0)
-	# A woven rug anchors the central part of each room.
-	draw_rect(Rect2(c.x - 48, c.y + 18, 96, 38), Color("76503b"), true)
-	draw_rect(Rect2(c.x - 43, c.y + 22, 86, 30), Color("b18a60"), false, 2)
-	match id:
-		"bedroom", "guest1", "guest2":
-			# Bed, pillows, bedside table and kerosene lamp.
-			draw_rect(Rect2(c.x - 94, c.y - 43, 112, 65), Color("4a3024"), true)
-			draw_rect(Rect2(c.x - 89, c.y - 39, 102, 55), Color("a77c59"), true)
-			draw_rect(Rect2(c.x - 81, c.y - 33, 34, 20), Color("e1c9a4"), true)
-			draw_rect(Rect2(c.x - 42, c.y - 33, 47, 20), Color("e1c9a4"), true)
-			draw_rect(Rect2(c.x + 55, c.y - 35, 37, 34), Color("60402d"), true)
-			draw_circle(Vector2(c.x + 73, c.y - 43), 7, Color("e7ad52"))
-			draw_circle(Vector2(c.x + 73, c.y - 43), 13, Color(1.0, 0.62, 0.22, 0.13))
-			draw_rect(Rect2(c.x - 102, c.y + 40, 35, 20), Color("61442f"), true)
-		"living":
-			# Sofa, coffee table, bookcase, fireplace and round concealed window.
-			draw_rect(Rect2(c.x - 100, c.y - 37, 95, 43), Color("563629"), true)
-			draw_rect(Rect2(c.x - 94, c.y - 32, 83, 31), Color("a24f38"), true)
-			draw_rect(Rect2(c.x + 16, c.y - 12, 63, 38), Color("69452f"), true)
-			draw_rect(Rect2(c.x + 22, c.y - 7, 51, 28), Color("bd9568"), true)
-			draw_rect(Rect2(c.x - 110, c.y + 40, 90, 18), Color("5b3d2b"), true)
-			for j in range(4):
-				draw_line(Vector2(c.x - 103 + j * 20, c.y + 42), Vector2(c.x - 103 + j * 20, c.y + 55), Color("d0ad79"), 2)
-			draw_rect(Rect2(c.x + 82, c.y - 48, 28, 58), Color("392a22"), true)
-			draw_circle(Vector2(c.x + 96, c.y - 20), 12, Color("ed9c3e"))
-			_draw_round_window(Vector2(c.x + 108, c.y - 59))
-		"kitchen":
-			# Worktop, sink, stove and hanging cookware.
-			draw_rect(Rect2(c.x - 105, c.y - 48, 178, 27), Color("9b7048"), true)
-			draw_rect(Rect2(c.x - 98, c.y - 43, 55, 17), Color("d2b58b"), true)
-			draw_rect(Rect2(c.x - 28, c.y - 43, 42, 17), Color("54463b"), true)
-			draw_rect(Rect2(c.x - 23, c.y - 39, 32, 9), Color("9b9a8a"), true)
-			draw_rect(Rect2(c.x + 46, c.y + 4, 53, 49), Color("40312a"), true)
-			draw_rect(Rect2(c.x + 52, c.y + 10, 41, 35), Color("b45d32"), true)
-			draw_circle(Vector2(c.x + 72, c.y + 27), 10, Color("f0a13e"))
-			draw_line(Vector2(c.x - 66, c.y - 62), Vector2(c.x - 66, c.y - 49), Color("c6a77b"), 3)
-			draw_line(Vector2(c.x - 5, c.y - 62), Vector2(c.x - 5, c.y - 49), Color("c6a77b"), 3)
-		"workshop":
-			# Heavy workbench, pegboard, tools and research desk.
-			draw_rect(Rect2(c.x - 105, c.y + 20, 190, 27), Color("64432d"), true)
-			draw_rect(Rect2(c.x - 99, c.y + 16, 178, 8), Color("c0945f"), true)
-			draw_rect(Rect2(c.x - 92, c.y - 55, 170, 35), Color("553a2a"), true)
-			for j in range(6):
-				draw_line(Vector2(c.x - 78 + j * 28, c.y - 48), Vector2(c.x - 78 + j * 28, c.y - 27), Color("d4b17b"), 3)
-			draw_circle(Vector2(c.x + 50, c.y + 4), 15, Color("8e9690"))
-			draw_circle(Vector2(c.x + 50, c.y + 4), 8, Color("343b38"))
-		"storage":
-			# Shelving, crates, sacks and labeled supply boxes.
-			for j in range(4):
-				var sx := c.x - 104 + float(j) * 54.0
-				draw_rect(Rect2(sx, c.y - 49, 43, 92), Color("5b3c2b"), true)
-				draw_rect(Rect2(sx + 4, c.y - 44, 35, 18), Color("bd9562"), true)
-				draw_rect(Rect2(sx + 4, c.y - 19, 35, 24), Color("8d6847"), true)
-				draw_rect(Rect2(sx + 4, c.y + 10, 35, 27), Color("b18a59"), true)
-		"arsenal":
-			# Weapon rack and locked ammunition chest.
-			draw_rect(Rect2(c.x - 105, c.y - 48, 160, 17), Color("4a3024"), true)
-			for j in range(5):
-				draw_line(Vector2(c.x - 92 + j * 29, c.y - 43), Vector2(c.x - 75 + j * 29, c.y - 5), Color("d1b68d"), 5)
-			draw_rect(Rect2(c.x - 32, c.y + 24, 91, 34), Color("65432c"), true)
-			draw_rect(Rect2(c.x - 28, c.y + 28, 83, 8), Color("b18a59"), true)
-	# Every room gets a warm practical light source.
-	var lamp_pos := Vector2(r.end.x - 25, r.position.y + 27)
-	draw_circle(lamp_pos, 12, Color(1.0, 0.58, 0.18, 0.10))
-	draw_circle(lamp_pos, 5, Color("efb45d"))
-
-func _draw_round_window(center: Vector2) -> void:
-	# The circular aperture is visible from inside; exterior camouflage is
-	# represented by the thick rock wall around the room.
-	draw_circle(center, 19, Color("332820"))
-	draw_circle(center, 14, Color("8d9a83"))
-	draw_circle(center, 10, Color("526b70"))
-	draw_line(center + Vector2(-12, 0), center + Vector2(12, 0), Color("d0b78d"), 2)
-	draw_line(center + Vector2(0, -12), center + Vector2(0, 12), Color("d0b78d"), 2)
 
