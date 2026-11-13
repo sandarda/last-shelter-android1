@@ -68,7 +68,7 @@ if project.exists():
     p = project.read_text(encoding="utf-8")
     require('run/main_scene="res://scenes/main.tscn"' in p, "main scene path matches project settings")
     require('config/name="Последнее убежище"' in p, "project title is configured")
-    require('config/version="0.33.1"' in p, "project version matches final source package")
+    require('config/version="0.34.1"' in p, "project version matches final source package")
 if scene.exists():
     s = scene.read_text(encoding="utf-8")
     require('res://scripts/game.gd' in s, "main scene references game.gd")
@@ -98,7 +98,7 @@ if script.exists():
     require("_load_art_assets" in g and "approved_ui_texture = load(approved_path)" in g and "active_texture: Texture2D = balcony_ui_texture if defense_mode else approved_ui_texture" in g, "approved bunker and balcony full-screen artwork are loaded and rendered")
     require("func _enter_balcony_defense(" in g and "func _leave_balcony_defense(" in g, "balcony defense scene transitions exist")
     require("func _process_defense(" in g and "defense_wave_counts := [8, 12, 16, 20]" in g, "four timed zombie attack waves are implemented")
-    require("func _fire_machinegun(" in g and "func _reload_machinegun(" in g, "machine-gun firing and reload actions exist")
+    require("func _fire_machinegun(" in g and "func _reload_machinegun(" in g, "machine-gun firing and compatibility action exist")
     require("func _update_defense_hud(" in g and "ammo_loaded" in g and "ammo_reserve" in g, "dynamic ammunition and defense HUD state exist")
     require("func _add_dynamic_counter(" in g and 'dynamic_counters["health"].text' in g, "survival resource counters update over approved artwork")
     balcony = ROOT / "art/ui/approved_balcony.png"
@@ -161,7 +161,7 @@ icon = ROOT / "art/app_icon.png"
 build_doc = ROOT / "docs/ANDROID_BUILD.md"
 require(preset.is_file() and 'name="Android"' in preset.read_text(encoding="utf-8"), "Android export preset exists")
 require(preset.is_file() and 'architectures/arm64-v8a=true' in preset.read_text(encoding="utf-8"), "Android preset targets ARM64")
-require(preset.is_file() and 'version/code=34' in preset.read_text(encoding="utf-8") and 'version/name="0.33.1"' in preset.read_text(encoding="utf-8"), "Android version code/name are updated")
+require(preset.is_file() and 'version/code=36' in preset.read_text(encoding="utf-8") and 'version/name="0.34.1"' in preset.read_text(encoding="utf-8"), "Android version code/name are updated")
 require(workflow.is_file() and 'godot --headless --path . --export-debug "Android"' in workflow.read_text(encoding="utf-8") and 'godot --headless --path . --quit-after 5' in workflow.read_text(encoding="utf-8"), "GitHub Actions Android export workflow and runtime smoke test exist")
 require(icon.is_file() and icon.stat().st_size > 1000, "application icon asset exists")
 require(build_doc.is_file() and "GitHub build" in build_doc.read_text(encoding="utf-8"), "Android build instructions exist")
@@ -186,10 +186,18 @@ if script.exists():
     require("room_rects.clear()" in g and "room_rects.append(r)" in g, "room interaction rectangles are populated on every floor")
     require("event.index == joystick_touch_index" in g and "_update_virtual_joystick(event.position)" in g, "Android virtual joystick touch tracking is wired")
     require("var source := Rect2(float(animation_frame) * 128.0, float(facing_row) * 160.0, 128.0, 160.0)" in g, "high-resolution casual survivor sprite animation is rendered")
-    require("defense_targets.append" in g and "aim_position.distance_to(target_pos)" in g, "zombie targets spawn and shots require aiming accuracy")
+    require("defense_targets.append" in g and "_distance_to_segment(center, muzzle, shot_end)" in g, "zombie targets spawn from water and shots follow turret aim")
+    require('"spawn_y": spawn_pos.y' in g and "inverse_lerp(spawn_y, 640.0, pos.y)" in g and "lerpf(start_scale, 1.55, perspective_progress)" in g, "zombie size grows smoothly according to actual distance from surf to balcony")
     require('"hp": 1 if defense_wave < 3 else 2' in g, "late-wave armored zombies require multiple hits")
     require('"lookout":\n\t\t\t_enter_balcony_defense()' in g, "lookout room interaction enters the dedicated balcony defense mode")
-    require("pos.y >= 625.0" in g and "defense_targets.remove_at(i)" in g, "escaped zombies damage the shelter and leave the active wave")
+    require("pos.y >= 640.0" in g and "defense_targets.remove_at(i)" in g, "escaped zombies damage the shelter and leave the active wave")
+    require("func _enter_room_view(" in g and "func _draw_room_view(" in g, "rooms open as isolated full-screen scenes")
+    require("room_player_x = clampf" in g and 'Input.get_axis("ui_left", "ui_right")' in g, "room movement is restricted to left and right")
+    require("room_story_" in g and "ROOM_STORIES" in g and 'cfg.set_value("world", "quest_flags", quest_flags)' in g, "individual room story progress is persisted")
+    require("_draw_clean_balcony_panorama()" in g and "defense_spawn_clock = 3.2" in g, "balcony begins with an empty shoreline before water spawns")
+    require("muzzle_flash_timer" in g and "casing_particles.append" in g and "_draw_machinegun_turret()" in g, "turret rotation, muzzle flash, recoil and ejected casings are rendered")
+    require('БЕСКОНЕЧНЫЙ' in g and 'ammo_reserve = 0' in g, "machine gun uses an infinite belt without reloading")
+    require("stair_up_button.visible = near_stairs" in g and "stair_down_button.visible = near_stairs" in g, "stair direction controls appear at the landing")
     require("var reticle_radius := 14.0 if zoom_mode" in g, "aim and zoom modes change the on-screen reticle")
 
 sprite = ROOT / "art/characters/survivor_sheet.png"

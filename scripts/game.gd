@@ -1,6 +1,6 @@
 extends Node2D
 
-# Last Shelter v0.33 — approved bunker UI, floor navigation, and balcony defense.
+# Last Shelter v0.34 — full-screen rooms, story activities, and live turret defense.
 const PLAYER_SPEED := 210.0
 const ROOM_W := 250.0
 const ROOM_H := 150.0
@@ -21,6 +21,31 @@ const LEVELS := [
 		{"id":"living","name":"ГОСТИНАЯ","pos":Vector2(0,0),"color":Color("8a6045")},
 		{"id":"lookout","name":"СМОТРОВАЯ","pos":Vector2(270,0),"color":Color("66727a")}], "links":[[0,1],[1,2]]}
 ]
+
+# Every room has its own continuing story thread and practical activity.
+const ROOM_STORIES := {
+	"bedroom": {"subtitle":"Личное пространство хозяина убежища", "story":"В старом дневнике остались записи о первых днях после катастрофы. Порядок в комнате помогает герою восстановить силы.", "action":"Перечитать дневник", "objective":"Восстановить силы и отметить важную запись"},
+	"living": {"subtitle":"Тихое сердце убежища", "story":"У камина герой слушает старые радиозаписи и вспоминает, ради чего стоит продолжать борьбу.", "action":"Провести время у камина", "objective":"Поддержать моральный дух"},
+	"kitchen": {"subtitle":"Запасы и приготовление пищи", "story":"Каждая банка и каждая порция на счету. Нужно следить за запасами и готовить еду заранее.", "action":"Приготовить еду", "objective":"Пополнить запас готовой еды"},
+	"workshop": {"subtitle":"Ремонт и изготовление оборудования", "story":"Здесь чинят инструменты, укрепляют двери и собирают полезные приспособления из найденного металлолома.", "action":"Поработать в мастерской", "objective":"Поддерживать инструменты и оборудование"},
+	"storage": {"subtitle":"Склад долгосрочных запасов", "story":"Склад нужно регулярно проверять: сортировать припасы, отмечать недостачу и готовить наборы для вылазок.", "action":"Проверить запасы", "objective":"Провести учёт припасов"},
+	"arsenal": {"subtitle":"Оружейная и подготовка обороны", "story":"Оружие должно быть исправно, а защитное снаряжение — готово к внезапной тревоге.", "action":"Проверить оружие", "objective":"Подготовить оборону убежища"},
+	"greenhouse": {"subtitle":"Теплица и автономное питание", "story":"Растения дают свежую пищу, но требуют воды, семян и ежедневного ухода.", "action":"Ухаживать за растениями", "objective":"Поддерживать урожай"},
+	"techblock": {"subtitle":"Вода, энергия и системы жизнеобеспечения", "story":"Фильтры и насосы удерживают убежище автономным. Любая неисправность может стать серьёзной проблемой.", "action":"Обслужить фильтр", "objective":"Обеспечить чистую воду"},
+	"lookout": {"subtitle":"Наблюдение за лагуной и побережьем", "story":"С берега иногда доносятся сигналы и шум прибоя. Здесь можно заметить угрозу раньше, чем она достигнет скалы.", "action":"Осмотреть побережье", "objective":"Проверить береговую линию"}
+}
+
+const ROOM_STORY_STEPS := {
+	"bedroom": ["В первой записи герой вспоминает, как обустраивал убежище.", "В ящике обнаруживается старая фотография и короткая записка.", "Личная история героя получает новую главу: он решает сохранить память о прошлом."],
+	"living": ["В старом радиоприёмнике находится запись довоенной музыкальной передачи.", "После настройки частоты среди помех слышится повторяющийся сигнал.", "Герой записывает сигнал в дневник: возможно, на острове есть другие выжившие."],
+	"kitchen": ["Проверка полок показывает, какие продукты нужно использовать в первую очередь.", "В старой тетради найден рецепт простого сытного блюда.", "Герой составляет меню на несколько дней и сокращает потери припасов."],
+	"workshop": ["Осмотр верстака выявляет изношенную деталь насосной системы.", "Среди металлолома удаётся подобрать подходящую заготовку.", "Инструмент восстановлен; мастерская готова к более сложному ремонту."],
+	"storage": ["В учёте обнаруживается расхождение между записями и фактическими запасами.", "За ящиками найден небольшой тайник с забытыми припасами.", "Склад рассортирован, тайник внесён в журнал, экспедиционные наборы подготовлены."],
+	"arsenal": ["Проверка выявляет износ нескольких деталей оружия.", "После обслуживания оружие снова работает надёжно.", "Оборона готова; герой отмечает, что боезапас пулемёта в смотровой бесконечный."],
+	"greenhouse": ["На грядках появляются первые здоровые ростки.", "Герой восстанавливает полив и распределяет семена по грядкам.", "Созревает первый небольшой урожай, повышая автономность убежища."],
+	"techblock": ["Фильтр воды работает с перебоями и требует обслуживания.", "Насос очищен, а картридж промыт и установлен обратно.", "Система жизнеобеспечения снова подаёт чистую воду."],
+	"lookout": ["На горизонте замечен слабый отблеск у скрытой яхты.", "При наблюдении становится ясно: движение в воде приближается к берегу.", "Подана тревога. Герой занимает пулемёт и защищает побережье."]
+}
 
 var current_floor := 2
 var player_pos := Vector2(640, 220)
@@ -70,6 +95,22 @@ var joystick_radius := 72.0
 var room_textures: Dictionary = {}
 var approved_ui_texture: Texture2D
 var balcony_ui_texture: Texture2D
+var room_mode := false
+var room_player_x := 768.0
+var room_move_axis := 0.0
+var room_controls: Array[Control] = []
+var room_title_label: Label
+var room_story_label: Label
+var room_action_button: Button
+var room_left_button: Button
+var room_right_button: Button
+var room_stairs_button: Button
+var room_shelter_button: Button
+var aim_touch_index := -1
+var casing_particles: Array[Dictionary] = []
+var turret_recoil := 0.0
+var turret_angle := 0.0
+const TURRET_PIVOT := Vector2(768.0, 785.0)
 # Balcony defense mode: real-time turret combat state.
 var defense_mode := false
 var defense_wave := 1
@@ -90,8 +131,8 @@ var defense_hit_flash := 0.0
 var muzzle_flash_timer := 0.0
 var defense_targets: Array[Dictionary] = []
 var defense_target_spawn_points: Array[Vector2] = [
-	Vector2(455, 455), Vector2(585, 425), Vector2(735, 410), Vector2(900, 415),
-	Vector2(1055, 425), Vector2(1190, 455), Vector2(660, 475), Vector2(820, 465)
+	Vector2(420, 385), Vector2(560, 365), Vector2(700, 380), Vector2(850, 370),
+	Vector2(1000, 385), Vector2(1160, 400), Vector2(650, 430), Vector2(930, 425)
 ]
 var aim_mode := false
 var zoom_mode := false
@@ -100,6 +141,7 @@ var defense_ammo_label: Label
 var defense_controls: Array[Control] = []
 var main_hotspots: Array[Control] = []
 var dynamic_counters: Dictionary = {}
+var hub_overlay_controls: Array[Control] = []
 var survivor_texture: Texture2D
 var animation_clock := 0.0
 var animation_frame := 0
@@ -251,13 +293,9 @@ func _build_ui() -> void:
 	_add_hotspot(layer, Rect2(1345, 728, 185, 132), "Отдых", _rest)
 	_add_hotspot(layer, Rect2(1480, 0, 56, 62), "Настройки", _toggle_action_panel)
 
-	# Balcony-defense controls are positioned over the approved balcony artwork.
+	# Balcony defense: one left-side aiming zone and one right-side hold-to-fire control.
 	_add_defense_hotspot(layer, Rect2(14, 105, 205, 78), "В УБЕЖИЩЕ", _leave_balcony_defense)
-	var reload_button := _add_defense_hotspot(layer, Rect2(250, 735, 185, 105), "ПЕРЕЗАРЯДКА", _reload_machinegun)
-	var fire_button := _add_defense_hotspot(layer, Rect2(485, 765, 205, 75), "ОГОНЬ", _fire_machinegun)
-	var aim_button := _add_defense_hotspot(layer, Rect2(690, 765, 220, 75), "ПРИЦЕЛ", _toggle_aim_mode)
-	_add_defense_hotspot(layer, Rect2(935, 765, 285, 75), "ЗУМ", _toggle_zoom)
-	# Hold-to-fire on touch devices; a normal tap also fires one round.
+	var fire_button := _add_defense_hotspot(layer, Rect2(1300, 650, 210, 190), "ОГОНЬ", _fire_machinegun)
 	fire_button.button_down.connect(_start_firing)
 	fire_button.button_up.connect(_stop_firing)
 	defense_status_label = Label.new()
@@ -271,13 +309,61 @@ func _build_ui() -> void:
 	defense_status_label.visible = false
 	layer.add_child(defense_status_label)
 	defense_ammo_label = Label.new()
-	defense_ammo_label.position = Vector2(100, 770)
-	defense_ammo_label.size = Vector2(150, 70)
+	defense_ammo_label.position = Vector2(28, 205)
+	defense_ammo_label.size = Vector2(280, 42)
 	defense_ammo_label.add_theme_font_size_override("font_size", 20)
 	defense_ammo_label.add_theme_color_override("font_color", Color("ffe18b"))
 	defense_ammo_label.visible = false
 	layer.add_child(defense_ammo_label)
 	_set_defense_controls_visible(false)
+
+	# Full-screen room controls. These stay visually separate from the approved bunker hub.
+	room_shelter_button = _add_room_control(layer, Rect2(18, 92, 205, 76), "УБЕЖИЩЕ", _leave_room_view)
+	room_shelter_button.add_theme_color_override("font_color", Color("24170a"))
+	room_shelter_button.add_theme_stylebox_override("normal", _ui_panel_style(Color("e0ad24"), Color("ffe28a")))
+	room_shelter_button.add_theme_stylebox_override("hover", _ui_panel_style(Color("f4c63f"), Color("fff0b5")))
+	room_left_button = _add_room_control(layer, Rect2(36, 720, 132, 112), "◀", func(): _set_room_move(0.0))
+	room_right_button = _add_room_control(layer, Rect2(182, 720, 132, 112), "▶", func(): _set_room_move(0.0))
+	room_action_button = _add_room_control(layer, Rect2(1035, 735, 270, 94), "ДЕЙСТВИЕ", _run_room_story_action)
+	room_stairs_button = _add_room_control(layer, Rect2(1315, 735, 190, 94), "К ЛЕСТНИЦЕ", _leave_room_to_stairs)
+	room_left_button.button_down.connect(func(): _set_room_move(-1.0))
+	room_left_button.button_up.connect(func(): _set_room_move(0.0))
+	room_right_button.button_down.connect(func(): _set_room_move(1.0))
+	room_right_button.button_up.connect(func(): _set_room_move(0.0))
+	room_title_label = Label.new()
+	room_title_label.position = Vector2(470, 24)
+	room_title_label.size = Vector2(600, 62)
+	room_title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	room_title_label.add_theme_font_size_override("font_size", 30)
+	room_title_label.add_theme_color_override("font_color", Color("ffe0a0"))
+	room_title_label.add_theme_color_override("font_outline_color", Color("1b1009"))
+	room_title_label.add_theme_constant_override("outline_size", 5)
+	room_title_label.visible = false
+	layer.add_child(room_title_label)
+	room_story_label = Label.new()
+	room_story_label.position = Vector2(360, 95)
+	room_story_label.size = Vector2(810, 90)
+	room_story_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	room_story_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	room_story_label.add_theme_font_size_override("font_size", 19)
+	room_story_label.add_theme_color_override("font_color", Color("fff0d3"))
+	room_story_label.add_theme_color_override("font_shadow_color", Color("160d08"))
+	room_story_label.add_theme_constant_override("shadow_offset_x", 2)
+	room_story_label.add_theme_constant_override("shadow_offset_y", 2)
+	room_story_label.visible = false
+	layer.add_child(room_story_label)
+
+	# The stair controls appear only when the survivor reaches the stair landing.
+	stair_up_button = _make_ui_button("▲  ВВЕРХ", _use_stairs_up)
+	stair_up_button.position = Vector2(350, 300)
+	stair_up_button.size = Vector2(145, 58)
+	stair_up_button.visible = false
+	layer.add_child(stair_up_button)
+	stair_down_button = _make_ui_button("▼  ВНИЗ", _use_stairs_down)
+	stair_down_button.position = Vector2(350, 365)
+	stair_down_button.size = Vector2(145, 58)
+	stair_down_button.visible = false
+	layer.add_child(stair_down_button)
 
 	# Secondary action drawer, opened from the settings/overflow hotspot.
 	var action_frame := PanelContainer.new()
@@ -287,6 +373,7 @@ func _build_ui() -> void:
 	action_frame.visible = false
 	action_frame.add_theme_stylebox_override("panel", _ui_panel_style(Color("17130f", 0.97), Color("a98551")))
 	layer.add_child(action_frame)
+	hub_overlay_controls.append(action_frame)
 	var scroll := ScrollContainer.new()
 	action_frame.add_child(scroll)
 	action_panel = VBoxContainer.new()
@@ -339,6 +426,7 @@ func _add_dynamic_counter(parent: CanvasLayer, key: String, rect: Rect2, font_si
 	backing.color = Color(0.035, 0.025, 0.018, 0.88)
 	backing.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	parent.add_child(backing)
+	hub_overlay_controls.append(backing)
 	var label := Label.new()
 	label.position = rect.position + Vector2(2, 1)
 	label.size = rect.size - Vector2(4, 2)
@@ -350,6 +438,7 @@ func _add_dynamic_counter(parent: CanvasLayer, key: String, rect: Rect2, font_si
 	label.add_theme_constant_override("outline_size", 2)
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	parent.add_child(label)
+	hub_overlay_controls.append(label)
 	dynamic_counters[key] = label
 
 func _add_hotspot(parent: CanvasLayer, rect: Rect2, caption: String, callback: Callable) -> Button:
@@ -379,6 +468,23 @@ func _add_hotspot(parent: CanvasLayer, rect: Rect2, caption: String, callback: C
 	button.pressed.connect(callback)
 	parent.add_child(button)
 	main_hotspots.append(button)
+	return button
+
+func _add_room_control(parent: CanvasLayer, rect: Rect2, caption: String, callback: Callable) -> Button:
+	var button := Button.new()
+	button.position = rect.position
+	button.size = rect.size
+	button.text = caption
+	button.focus_mode = Control.FOCUS_NONE
+	button.add_theme_font_size_override("font_size", 23 if caption in ["◀", "▶"] else 17)
+	button.add_theme_color_override("font_color", Color("ffe7b6"))
+	button.add_theme_stylebox_override("normal", _ui_panel_style(Color("21170f", 0.94), Color("b98b45")))
+	button.add_theme_stylebox_override("hover", _ui_panel_style(Color("59401f", 0.97), Color("f0c45d")))
+	button.add_theme_stylebox_override("pressed", _ui_panel_style(Color("76551f", 0.98), Color("ffe08a")))
+	button.pressed.connect(callback)
+	button.visible = false
+	parent.add_child(button)
+	room_controls.append(button)
 	return button
 
 func _add_defense_hotspot(parent: CanvasLayer, rect: Rect2, caption: String, callback: Callable) -> Button:
@@ -411,11 +517,23 @@ func _set_defense_controls_visible(show_controls: bool) -> void:
 	for control in defense_controls:
 		control.visible = show_controls
 	for control in main_hotspots:
-		control.visible = not show_controls
+		control.visible = not show_controls and not room_mode
+	for control in hub_overlay_controls:
+		control.visible = not room_mode
+	for control in room_controls:
+		control.visible = room_mode and not show_controls
 	if is_instance_valid(defense_status_label):
 		defense_status_label.visible = show_controls
 	if is_instance_valid(defense_ammo_label):
 		defense_ammo_label.visible = show_controls
+	if is_instance_valid(room_title_label):
+		room_title_label.visible = room_mode and not show_controls
+	if is_instance_valid(room_story_label):
+		room_story_label.visible = room_mode and not show_controls
+	if is_instance_valid(stair_up_button) and room_mode:
+		stair_up_button.visible = false
+	if is_instance_valid(stair_down_button) and room_mode:
+		stair_down_button.visible = false
 
 func _enter_balcony_defense() -> void:
 	if defense_mode:
@@ -427,13 +545,23 @@ func _enter_balcony_defense() -> void:
 	defense_active_targets = 0
 	defense_targets.clear()
 	defense_kills = 0
-	defense_spawn_clock = 0.8
+	defense_spawn_clock = 3.2
 	defense_breach_clock = 0.0
 	defense_shot_clock = 0.0
 	defense_wave_break = 0.0
 	fire_held = false
+	room_mode = false
+	room_move_axis = 0.0
+	if is_instance_valid(stair_up_button):
+		stair_up_button.visible = false
+	if is_instance_valid(stair_down_button):
+		stair_down_button.visible = false
+	ammo_loaded = 120
+	ammo_reserve = 0
+	casing_particles.clear()
+	turret_recoil = 0.0
 	_set_defense_controls_visible(true)
-	_set_message("Оборона балкона началась. Зомби выходят из воды — держи берег!")
+	_set_message("Побережье пока пусто. Первые заражённые появятся из воды.")
 	_update_defense_hud()
 	queue_redraw()
 
@@ -442,8 +570,8 @@ func _leave_balcony_defense() -> void:
 		return
 	defense_mode = false
 	fire_held = false
-	_save_game_silent()
 	_set_defense_controls_visible(false)
+	_save_game_silent()
 	_set_message("Ты вернулся в убежище. Уничтожено зомби: %d." % defense_kills)
 	_update_ui()
 	queue_redraw()
@@ -457,20 +585,19 @@ func _stop_firing() -> void:
 func _fire_machinegun() -> void:
 	if not defense_mode:
 		return
-	if ammo_loaded <= 0:
-		_set_message("Пулемёт пуст. Нажми «Перезарядка».")
-		return
-	ammo_loaded -= 1
-	defense_shot_clock = 0.12
-	muzzle_flash_timer = 0.07
+	# The belt is endless: firing never consumes ammunition and never requires reloading.
+	defense_shot_clock = 0.10
+	muzzle_flash_timer = 0.085
+	turret_recoil = 1.0
+	var muzzle := _get_turret_muzzle_position()
+	var shot_end := aim_position
 	var hit_index := -1
 	var hit_distance := INF
 	for i in range(defense_targets.size()):
 		var target: Dictionary = defense_targets[i]
-		var target_pos: Vector2 = target["pos"]
-		var target_scale := float(target["scale"])
-		var radius := 38.0 * target_scale if aim_mode else 27.0 * target_scale
-		var distance := aim_position.distance_to(target_pos)
+		var center: Vector2 = target["pos"] + Vector2(0, -22.0 * float(target["scale"]))
+		var distance := _distance_to_segment(center, muzzle, shot_end)
+		var radius := 24.0 * float(target["scale"])
 		if distance <= radius and distance < hit_distance:
 			hit_index = i
 			hit_distance = distance
@@ -482,30 +609,43 @@ func _fire_machinegun() -> void:
 			defense_total_remaining = maxi(0, defense_total_remaining - 1)
 			defense_kills += 1
 			defense_hit_flash = 0.18
-			_set_message("Попадание! Уничтожено зомби: %d." % defense_kills)
+			_set_message("Попадание! Уничтожено заражённых: %d." % defense_kills)
 		else:
 			target["hp"] = hp
 			defense_targets[hit_index] = target
 			defense_hit_flash = 0.08
 	else:
-		_set_message("Промах. Наведи прицел точнее.")
+		_set_message("Очередь ушла в сторону. Скорректируй наведение.")
+	var eject_direction := (aim_position - TURRET_PIVOT).normalized()
+	var turret_rotation := Vector2.UP.angle_to(eject_direction)
+	var eject_position := TURRET_PIVOT + Vector2(62, -86).rotated(turret_rotation)
+	var eject_velocity := Vector2(145.0, -95.0).rotated(turret_rotation * 0.45)
+	casing_particles.append({"pos": eject_position, "vel": eject_velocity, "life": 0.85, "spin": randf_range(-9.0, 9.0)})
+	if casing_particles.size() > 36:
+		casing_particles.pop_front()
 	defense_active_targets = defense_targets.size()
 	if defense_total_remaining == 0 and defense_active_targets == 0 and defense_spawned >= int(defense_wave_counts[defense_wave - 1]):
 		_complete_defense_wave()
 	_update_defense_hud()
 	queue_redraw()
 
+func _distance_to_segment(point: Vector2, start: Vector2, finish: Vector2) -> float:
+	var segment := finish - start
+	var length_sq := segment.length_squared()
+	if length_sq <= 0.001:
+		return point.distance_to(start)
+	var t := clampf((point - start).dot(segment) / length_sq, 0.0, 1.0)
+	return point.distance_to(start + segment * t)
+
+func _get_turret_muzzle_position() -> Vector2:
+	var direction := (aim_position - TURRET_PIVOT).normalized()
+	return TURRET_PIVOT + direction * 210.0
+
 func _reload_machinegun() -> void:
-	if ammo_loaded >= 120:
-		_set_message("Лента уже полная.")
-		return
-	if ammo_reserve <= 0:
-		_set_message("Запас патронов закончился. Нужны боеприпасы со склада.")
-		return
-	var transfer := mini(120 - ammo_loaded, ammo_reserve)
-	ammo_loaded += transfer
-	ammo_reserve -= transfer
-	_set_message("Пулемёт перезаряжен: %d патронов." % transfer)
+	# Kept for compatibility with older saves; the balcony gun is permanently belt-fed.
+	ammo_loaded = 120
+	ammo_reserve = 0
+	_set_message("Пулемёт с бесконечной лентой. Перезарядка не требуется.")
 	_update_defense_hud()
 
 func _toggle_aim_mode() -> void:
@@ -534,6 +674,20 @@ func _process_defense(delta: float) -> void:
 		defense_hit_flash = maxf(0.0, defense_hit_flash - delta)
 	if muzzle_flash_timer > 0.0:
 		muzzle_flash_timer = maxf(0.0, muzzle_flash_timer - delta)
+	turret_recoil = move_toward(turret_recoil, 0.0, delta * 5.5)
+	for casing_index in range(casing_particles.size() - 1, -1, -1):
+		var casing: Dictionary = casing_particles[casing_index]
+		var casing_pos: Vector2 = casing["pos"]
+		var casing_vel: Vector2 = casing["vel"]
+		casing_vel.y += 320.0 * delta
+		casing_pos += casing_vel * delta
+		casing["pos"] = casing_pos
+		casing["vel"] = casing_vel
+		casing["life"] = float(casing["life"]) - delta
+		if float(casing["life"]) <= 0.0:
+			casing_particles.remove_at(casing_index)
+		else:
+			casing_particles[casing_index] = casing
 	if defense_wave_break > 0.0:
 		defense_wave_break -= delta
 		if defense_wave_break <= 0.0:
@@ -550,14 +704,16 @@ func _process_defense(delta: float) -> void:
 			_fire_machinegun()
 			if not defense_mode:
 				return
-			defense_shot_clock = 0.12
+			defense_shot_clock = 0.10
 	if defense_total_remaining > 0 and defense_spawned < int(defense_wave_counts[defense_wave - 1]):
 		defense_spawn_clock -= delta
 		if defense_spawn_clock <= 0.0:
 			var spawn_index := randi_range(0, defense_target_spawn_points.size() - 1)
 			var spawn_pos: Vector2 = defense_target_spawn_points[spawn_index]
-			var target_scale := randf_range(0.72, 1.0)
-			defense_targets.append({"pos": spawn_pos, "hp": 1 if defense_wave < 3 else 2, "scale": target_scale, "speed": 17.0 + float(defense_wave) * 4.0})
+			var target_scale := randf_range(0.26, 0.38)
+			# Store the surf line and initial size so perspective scale is derived
+			# from actual beach progress, not elapsed time.
+			defense_targets.append({"pos": spawn_pos, "spawn_y": spawn_pos.y, "start_scale": target_scale, "hp": 1 if defense_wave < 3 else 2, "scale": target_scale, "speed": 30.0 + float(defense_wave) * 5.0})
 			defense_spawned += 1
 			defense_active_targets = defense_targets.size()
 			defense_spawn_clock = maxf(0.85, 2.1 - float(defense_wave) * 0.22)
@@ -568,8 +724,15 @@ func _process_defense(delta: float) -> void:
 		var pos: Vector2 = target["pos"]
 		pos.y += float(target["speed"]) * delta
 		target["pos"] = pos
-		target["scale"] = minf(1.25, float(target["scale"]) + delta * 0.035)
-		if pos.y >= 625.0:
+		# Perspective is tied directly to distance travelled from the surf to
+		# the balcony line: far-away zombies stay small, then grow smoothly as
+		# they approach the foreground. This is frame-rate independent.
+		var spawn_y: float = float(target.get("spawn_y", 385.0))
+		var start_scale: float = float(target.get("start_scale", 0.30))
+		var approach_progress := clampf(inverse_lerp(spawn_y, 640.0, pos.y), 0.0, 1.0)
+		var perspective_progress := approach_progress * approach_progress * (3.0 - 2.0 * approach_progress)
+		target["scale"] = lerpf(start_scale, 1.55, perspective_progress)
+		if pos.y >= 640.0:
 			shelter_integrity = maxf(0.0, shelter_integrity - (5.0 + float(defense_wave)))
 			defense_total_remaining = maxi(0, defense_total_remaining - 1)
 			defense_targets.remove_at(i)
@@ -579,18 +742,220 @@ func _process_defense(delta: float) -> void:
 	defense_active_targets = defense_targets.size()
 	if defense_total_remaining == 0 and defense_active_targets == 0 and defense_spawned >= int(defense_wave_counts[defense_wave - 1]) and defense_wave_break <= 0.0:
 		_complete_defense_wave()
-	if ammo_loaded <= 0 and fire_held:
-		fire_held = false
-		_set_message("Патроны закончились! Перезаряди пулемёт.")
 	_update_defense_hud()
 
 func _update_defense_hud() -> void:
 	if dynamic_counters.has("ammo"):
-		dynamic_counters["ammo"].text = str(ammo_loaded)
+		dynamic_counters["ammo"].text = "∞" if defense_mode else str(ammo_loaded)
 	if is_instance_valid(defense_status_label):
 		defense_status_label.text = "ВОЛНА %d/4\nЗОМБИ: %d\nУБЕЖИЩЕ: %d%%" % [defense_wave, defense_total_remaining, int(shelter_integrity)]
 	if is_instance_valid(defense_ammo_label):
-		defense_ammo_label.text = "ПАТРОНЫ\n%d / %d" % [ammo_loaded, ammo_reserve]
+		defense_ammo_label.text = "БОЕЗАПАС\nБЕСКОНЕЧНЫЙ"
+
+func _add_room_story_text() -> void:
+	var story: Dictionary = ROOM_STORIES.get(selected_room_id, ROOM_STORIES["living"])
+	if is_instance_valid(room_title_label):
+		room_title_label.text = selected_room_name
+	if is_instance_valid(room_story_label):
+		var progress := int(quest_flags.get("room_story_" + selected_room_id, 0))
+		var objective := str(story["objective"])
+		room_story_label.text = str(story["subtitle"]) + "\n" + str(story["story"]) + "\nЭтап: %d  •  %s" % [progress, objective]
+	if is_instance_valid(room_action_button):
+		room_action_button.text = str(story["action"])
+
+func _enter_room_view(room_id: String, room_name: String) -> void:
+	if defense_mode or room_mode:
+		return
+	selected_room_id = room_id
+	selected_room_name = room_name
+	room_mode = true
+	room_player_x = 768.0
+	room_move_axis = 0.0
+	virtual_axis = Vector2.ZERO
+	moving = false
+	pending_interaction_room = ""
+	_add_room_story_text()
+	_set_defense_controls_visible(false)
+	_set_message("Ты вошёл в помещение: %s." % selected_room_name)
+	queue_redraw()
+
+func _leave_room_view() -> void:
+	if not room_mode:
+		return
+	room_mode = false
+	room_move_axis = 0.0
+	_set_defense_controls_visible(false)
+	_set_message("Ты вернулся к общему плану убежища.")
+	_update_ui()
+	queue_redraw()
+
+func _leave_room_to_stairs() -> void:
+	if not room_mode:
+		return
+	room_mode = false
+	room_move_axis = 0.0
+	player_pos = STAIR_LANDINGS[current_floor]
+	moving = false
+	_walkable_rectangles()
+	_set_defense_controls_visible(false)
+	_set_message("Ты вышел в коридор к винтовой лестнице.")
+	_update_ui()
+	queue_redraw()
+
+func _set_room_move(axis: float) -> void:
+	room_move_axis = axis
+
+func _run_room_story_action() -> void:
+	if not room_mode:
+		return
+	var progress_key := "room_story_" + selected_room_id
+	var step := int(quest_flags.get(progress_key, 0))
+	var story_steps: Array = ROOM_STORY_STEPS.get(selected_room_id, [])
+	quest_flags[progress_key] = mini(step + 1, story_steps.size()) if not story_steps.is_empty() else step + 1
+	match selected_room_id:
+		"bedroom":
+			energy = minf(100.0, energy + 14.0)
+			morale = minf(100.0, morale + 2.0)
+			_advance_time(10)
+			_set_message("Запись в дневнике прочитана. Герой немного отдохнул.")
+		"living":
+			_advance_time(20)
+			morale = minf(100.0, morale + 5.0)
+			_set_message("Тихий вечер у камина помог восстановить моральный дух.")
+		"kitchen":
+			_cook_meal()
+		"workshop":
+			_work()
+		"storage":
+			_set_message("Учёт склада: дерево %d, еда %d, вода %d, металл %d." % [wood, food, water, scrap])
+		"arsenal":
+			weapon_durability = minf(100.0, weapon_durability + 8.0)
+			_set_message("Оружие осмотрено и обслужено. Исправность: %d%%." % int(weapon_durability))
+		"greenhouse":
+			_tend_garden()
+		"techblock":
+			_purify_water()
+		"lookout":
+			if step < story_steps.size():
+				_set_message(last_message + " " + str(story_steps[step]))
+			_save_game_silent()
+			_enter_balcony_defense()
+			return
+	if step < story_steps.size():
+		_set_message(last_message + " " + str(story_steps[step]))
+	else:
+		_set_message(last_message + " История этой комнаты завершена; можно продолжать ежедневные дела.")
+	_save_game_silent()
+	_add_room_story_text()
+	_update_ui()
+
+func _process_room_mode(delta: float) -> void:
+	var axis := Input.get_axis("ui_left", "ui_right")
+	if absf(room_move_axis) > 0.05:
+		axis = room_move_axis
+	elif absf(virtual_axis.x) > 0.08:
+		axis = virtual_axis.x
+	if absf(axis) > 0.08:
+		room_player_x = clampf(room_player_x + axis * PLAYER_SPEED * 1.35 * delta, 145.0, 1390.0)
+		_update_facing(Vector2(axis, 0.0))
+		animation_clock += delta
+		if animation_clock >= 0.12:
+			animation_clock = 0.0
+			animation_frame = (animation_frame + 1) % 4
+	else:
+		animation_frame = 0
+	time_fraction += delta * 2.0
+	var elapsed_minutes := int(time_fraction)
+	if elapsed_minutes > 0:
+		time_fraction -= float(elapsed_minutes)
+		_advance_time(elapsed_minutes)
+	if health <= 0.0 and not game_over:
+		game_over = true
+		_set_message("Ты погиб. Загрузи последнее сохранение или начни заново.")
+	_update_ui()
+	queue_redraw()
+
+func _draw_room_view() -> void:
+	var texture: Texture2D = room_textures.get(selected_room_id, null)
+	if texture != null:
+		draw_texture_rect(texture, Rect2(0, 0, 1536, 864), false)
+	else:
+		_draw_procedural_room(selected_room_id)
+	# Darken the upper/lower edges so room controls read clearly without covering the room.
+	draw_rect(Rect2(0, 0, 1536, 78), Color(0.035, 0.025, 0.018, 0.80), true)
+	draw_rect(Rect2(0, 690, 1536, 174), Color(0.035, 0.025, 0.018, 0.36), true)
+	if survivor_texture != null:
+		var source := Rect2(float(animation_frame) * 128.0, float(facing_row) * 160.0, 128.0, 160.0)
+		var destination := Rect2(room_player_x - 68.0, 475.0, 136.0, 190.0)
+		draw_texture_rect_region(survivor_texture, destination, source)
+	draw_string(ThemeDB.fallback_font, Vector2(40, 205), "←  ПЕРЕМЕЩЕНИЕ ПО ПОЛУ  →", HORIZONTAL_ALIGNMENT_LEFT, 420, 18, Color("f4d7a7"))
+	draw_string(ThemeDB.fallback_font, Vector2(1120, 700), "ДЕЙСТВИЕ В ПОМЕЩЕНИИ", HORIZONTAL_ALIGNMENT_CENTER, 330, 17, Color("f4d7a7"))
+
+func _draw_procedural_room(room_id: String) -> void:
+	var wall := Color("49372a")
+	var floor := Color("76553b")
+	if room_id == "greenhouse":
+		wall = Color("34463a")
+		floor = Color("6a5739")
+	elif room_id == "techblock":
+		wall = Color("35434a")
+		floor = Color("4d514a")
+	elif room_id == "lookout":
+		wall = Color("39434b")
+		floor = Color("6b5845")
+	draw_rect(Rect2(0, 0, 1536, 590), wall, true)
+	draw_rect(Rect2(0, 590, 1536, 274), floor, true)
+	for beam_x in range(0, 1536, 190):
+		draw_rect(Rect2(beam_x, 0, 16, 590), Color("241c17"), true)
+		draw_rect(Rect2(beam_x + 16, 0, 5, 590), Color("a47a4b"), true)
+	for seam in range(0, 1536, 90):
+		draw_line(Vector2(seam, 595), Vector2(seam, 864), Color("3a291e"), 3.0)
+	if room_id == "greenhouse":
+		for row in range(3):
+			var y := 300.0 + float(row) * 125.0
+			draw_rect(Rect2(150, y, 1230, 28), Color("4a3021"), true)
+			for plant in range(12):
+				var x := 185.0 + float(plant) * 98.0
+				draw_rect(Rect2(x, y - 52, 54, 52), Color("46372a"), true)
+				draw_line(Vector2(x + 27, y - 4), Vector2(x + 27, y - 48), Color("7fa35b"), 7.0)
+				draw_line(Vector2(x + 27, y - 25), Vector2(x + 8, y - 39), Color("9abd65"), 6.0)
+				draw_line(Vector2(x + 27, y - 30), Vector2(x + 46, y - 44), Color("9abd65"), 6.0)
+	elif room_id == "techblock":
+		for i in range(4):
+			var x := 180.0 + float(i) * 330.0
+			draw_rect(Rect2(x, 235, 180, 350), Color("69777a"), true)
+			draw_rect(Rect2(x + 16, 250, 148, 320), Color("26343a"), true)
+			draw_circle(Vector2(x + 90, 340), 42, Color("75a6a3"))
+			draw_circle(Vector2(x + 90, 340), 30, Color("263e43"))
+			draw_line(Vector2(x + 90, 382), Vector2(x + 90, 500), Color("c39a5c"), 8.0)
+	else:
+		draw_rect(Rect2(120, 170, 1290, 410), Color("1d282f"), true)
+		if room_id == "lookout":
+			# Wide reinforced observation window over the lagoon and distant ruined city.
+			for band in range(12):
+				var sky_color := Color("3b4d62").lerp(Color("e59a62"), float(band) / 11.0)
+				draw_rect(Rect2(145, 190 + band * 17, 1240, 18), sky_color, true)
+			draw_circle(Vector2(1160, 280), 45, Color("ffd38a"))
+			draw_rect(Rect2(145, 385, 1240, 165), Color("315968"), true)
+			for building in range(18):
+				var bx := 180.0 + float(building) * 67.0
+				var bh := 45.0 + float((building * 37) % 115)
+				draw_rect(Rect2(bx, 385.0 - bh, 42.0, bh), Color("34343a"), true)
+			for wave in range(18):
+				var wy := 400.0 + float(wave) * 8.0
+				draw_line(Vector2(160 + wave * 11, wy), Vector2(1370, wy - 2), Color(0.78, 0.88, 0.85, 0.24), 2.0)
+			draw_rect(Rect2(145, 190, 1240, 360), Color("d3b17b"), false, 12.0)
+			for x in range(170, 1380, 310):
+				draw_line(Vector2(x, 190), Vector2(x, 550), Color("d3b17b"), 9.0)
+			draw_line(Vector2(145, 370), Vector2(1385, 370), Color("d3b17b"), 8.0)
+		else:
+			draw_rect(Rect2(145, 190, 1240, 360), Color("8b9a91"), true)
+			draw_rect(Rect2(145, 190, 1240, 360), Color("334b59", 0.35), true)
+			for x in range(170, 1380, 150):
+				draw_line(Vector2(x, 190), Vector2(x, 550), Color("d3b17b"), 8.0)
+			draw_line(Vector2(145, 370), Vector2(1385, 370), Color("d3b17b"), 8.0)
+		draw_rect(Rect2(540, 570, 470, 40), Color("493525"), true)
+		draw_rect(Rect2(560, 550, 430, 20), Color("b18a58"), true)
 
 func _select_and_run_room(room_id: String, room_name: String, callback: Callable) -> void:
 	selected_room_id = room_id
@@ -752,6 +1117,11 @@ func _update_virtual_joystick(touch_position: Vector2) -> void:
 	queue_redraw()
 
 func _unhandled_input(event: InputEvent) -> void:
+	if room_mode:
+		if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ESCAPE:
+			_leave_room_view()
+			get_viewport().set_input_as_handled()
+		return
 	if defense_mode:
 		if event is InputEventKey:
 			if event.keycode == KEY_SPACE:
@@ -761,7 +1131,7 @@ func _unhandled_input(event: InputEvent) -> void:
 				get_viewport().set_input_as_handled()
 				return
 			if event.pressed and not event.echo and event.keycode == KEY_R:
-				_reload_machinegun()
+				_set_message("Бесконечная лента: перезарядка не нужна.")
 				get_viewport().set_input_as_handled()
 				return
 			if event.pressed and not event.echo and event.keycode == KEY_ESCAPE:
@@ -775,10 +1145,14 @@ func _unhandled_input(event: InputEvent) -> void:
 			aim_position = Vector2(clampf(event.position.x, 250.0, 1300.0), clampf(event.position.y, 250.0, 650.0))
 			queue_redraw()
 		elif event is InputEventScreenTouch and event.pressed:
-			aim_position = Vector2(clampf(event.position.x, 250.0, 1300.0), clampf(event.position.y, 250.0, 650.0))
-			queue_redraw()
-		elif event is InputEventScreenDrag:
-			aim_position = Vector2(clampf(event.position.x, 250.0, 1300.0), clampf(event.position.y, 250.0, 650.0))
+			if event.position.x < 470.0 and event.position.y > 350.0:
+				aim_touch_index = event.index
+				get_viewport().set_input_as_handled()
+		elif event is InputEventScreenTouch and not event.pressed and event.index == aim_touch_index:
+			aim_touch_index = -1
+		elif event is InputEventScreenDrag and event.index == aim_touch_index:
+			aim_position.x = clampf(aim_position.x + event.relative.x * 1.8, 280.0, 1280.0)
+			aim_position.y = clampf(aim_position.y + event.relative.y * 1.5, 300.0, 630.0)
 			queue_redraw()
 		return
 	# Touch joystick lives in the lower-left gap between navigation and profile panels.
@@ -808,7 +1182,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			if _try_stair_navigation(event.position):
 				get_viewport().set_input_as_handled()
 				return
-			if _try_furniture_interaction(event.position):
+			if _try_enter_room_at(event.position):
 				get_viewport().set_input_as_handled()
 				return
 			pending_interaction_room = ""
@@ -821,7 +1195,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			if _try_stair_navigation(event.position):
 				get_viewport().set_input_as_handled()
 				return
-			if _try_furniture_interaction(event.position):
+			if _try_enter_room_at(event.position):
 				get_viewport().set_input_as_handled()
 				return
 			pending_interaction_room = ""
@@ -878,25 +1252,19 @@ func _clamp_walkable_point(point: Vector2) -> Vector2:
 
 
 func _try_stair_navigation(point: Vector2) -> bool:
-	# Tapping the visible stairwell makes the survivor walk there first;
-	# changing floors is never an instant teleport from another room.
+	# The survivor first walks to the stair landing. Only then do the up/down controls appear.
 	if not Rect2(205.0, 260.0, 110.0, 445.0).has_point(point):
 		return false
 	pending_interaction_room = ""
+	pending_stair_floor = -1
 	if stair_transition_active:
 		return true
-	if current_floor >= 2:
-		pending_stair_floor = 1
-	elif current_floor <= 0:
-		pending_stair_floor = 1
-	else:
-		pending_stair_floor = 2 if point.y < STAIR_LANDINGS[1].y else 0
-	var destination := pending_stair_floor
-	pending_stair_floor = -1
 	target_pos = STAIR_LANDINGS[current_floor]
-	moving = true
-	pending_stair_floor = destination
-	_set_message("Ты направился к винтовой лестнице…")
+	moving = player_pos.distance_to(target_pos) > 5.0
+	if not moving:
+		_set_message("Ты на лестнице. Выбери направление подъёма или спуска.")
+	else:
+		_set_message("Ты направился к винтовой лестнице…")
 	return true
 
 func _try_furniture_interaction(point: Vector2) -> bool:
@@ -959,6 +1327,14 @@ func _interact_with_furniture(room_id: String) -> void:
 		"lookout":
 			_enter_balcony_defense()
 
+func _try_enter_room_at(point: Vector2) -> bool:
+	for i in range(room_rects.size()):
+		if room_rects[i].has_point(point):
+			var room: Dictionary = LEVELS[current_floor]["rooms"][i]
+			_enter_room_view(str(room["id"]), str(room["name"]))
+			return true
+	return false
+
 func _select_room_at(point: Vector2) -> void:
 	for i in range(room_rects.size()):
 		if room_rects[i].has_point(point):
@@ -1005,6 +1381,9 @@ func _process(delta: float) -> void:
 	if defense_mode:
 		_process_defense(delta)
 		queue_redraw()
+		return
+	if room_mode:
+		_process_room_mode(delta)
 		return
 	var axis := Vector2(Input.get_axis("ui_left", "ui_right"), Input.get_axis("ui_up", "ui_down"))
 	if virtual_axis.length() > 0.08:
@@ -1062,11 +1441,13 @@ func _process(delta: float) -> void:
 	if health <= 0 and not game_over:
 		game_over = true
 		_set_message("Ты погиб. Загрузи последнее сохранение или начни заново.")
-	var near_stairs := player_pos.distance_to(STAIR_LANDINGS[current_floor]) <= 135.0
+	var near_stairs := player_pos.distance_to(STAIR_LANDINGS[current_floor]) <= 85.0
 	if is_instance_valid(stair_up_button):
-		stair_up_button.disabled = not near_stairs or current_floor >= 2
+		stair_up_button.disabled = current_floor >= 2
+		stair_up_button.visible = near_stairs and not room_mode and not defense_mode
 	if is_instance_valid(stair_down_button):
-		stair_down_button.disabled = not near_stairs or current_floor <= 0
+		stair_down_button.disabled = current_floor <= 0
+		stair_down_button.visible = near_stairs and not room_mode and not defense_mode
 	_update_ui()
 	queue_redraw()
 
@@ -1591,17 +1972,8 @@ func _update_ui() -> void:
 		dynamic_counters["medkits"].text = str(medkits)
 
 func _room_action_caption() -> String:
-	match selected_room_id:
-		"bedroom", "guest1", "guest2": return "отдых"
-		"living": return "посидеть у камина"
-		"kitchen": return "приготовить еду"
-		"workshop": return "поработать в мастерской"
-		"storage": return "проверить запасы"
-		"arsenal": return "осмотреть оружейную"
-		"greenhouse": return "ухаживать за теплицей"
-		"techblock": return "очистить воду"
-		"lookout": return "выйти на балкон"
-	return "осмотреть помещение"
+	var story: Dictionary = ROOM_STORIES.get(selected_room_id, ROOM_STORIES["living"])
+	return str(story["action"])
 
 func _save_game() -> void:
 	_save_game_silent()
@@ -1639,6 +2011,7 @@ func _save_game_silent() -> void:
 	cfg.set_value("world", "explored_cache", explored_cache)
 	cfg.set_value("world", "zombies", zombies)
 	cfg.set_value("world", "shelter_integrity", shelter_integrity)
+	cfg.set_value("world", "quest_flags", quest_flags)
 	cfg.set_value("world", "version", 10)
 	cfg.set_value("island", "location", island_location)
 	cfg.set_value("island", "explored_locations", explored_locations)
@@ -1683,6 +2056,7 @@ func _load_game() -> void:
 	zombies = int(cfg.get_value("world", "zombies", 0))
 	shelter_integrity = float(cfg.get_value("world", "shelter_integrity", 100.0))
 	game_over = bool(cfg.get_value("world", "game_over", false))
+	quest_flags = cfg.get_value("world", "quest_flags", {})
 	last_message = str(cfg.get_value("world", "last_message", "Сохранение загружено."))
 	# Sanitize values from older or damaged save files before they reach gameplay/UI.
 	day = maxi(day, 1)
@@ -1747,35 +2121,28 @@ func _update_facing(direction: Vector2) -> void:
 		facing_row = 0 if direction.y > 0.0 else 3
 
 func _draw() -> void:
-	# Two approved full-screen art layers: bunker hub and first-person balcony defense.
+	if room_mode:
+		_draw_room_view()
+		return
 	var active_texture: Texture2D = balcony_ui_texture if defense_mode else approved_ui_texture
 	if active_texture != null:
 		draw_texture_rect(active_texture, Rect2(Vector2.ZERO, Vector2(1536, 864)), false)
 	else:
 		draw_rect(Rect2(Vector2.ZERO, Vector2(1536, 864)), Color("211a14"), true)
 	if defense_mode:
-		# Muzzle flash and tracer make sustained fire visibly respond to input.
-		if muzzle_flash_timer > 0.0:
-			var muzzle := Vector2(770, 565)
-			draw_line(muzzle, aim_position, Color(1.0, 0.78, 0.34, 0.78), 3.0)
-			draw_circle(muzzle, 24.0, Color(1.0, 0.72, 0.22, 0.28))
-			draw_circle(muzzle, 10.0, Color(1.0, 0.92, 0.62, 0.85))
-		# Animated attacker markers follow the illustrated beach zombies.
+		_draw_clean_balcony_panorama()
+		_draw_machinegun_turret()
+		# Large, progressively growing infected silhouettes enter only from the water.
 		for target in defense_targets:
-			var target_pos: Vector2 = target["pos"]
-			var scale_factor := float(target["scale"])
-			var body_h := 34.0 * scale_factor
-			var body_w := 18.0 * scale_factor
-			draw_circle(target_pos + Vector2(0, -body_h * 0.78), 7.0 * scale_factor, Color("29221e"))
-			draw_line(target_pos + Vector2(0, -body_h * 0.65), target_pos + Vector2(0, -body_h * 0.12), Color("342b26"), body_w * 0.58)
-			draw_line(target_pos + Vector2(0, -body_h * 0.48), target_pos + Vector2(-body_w, -body_h * 0.12), Color("342b26"), 4.0 * scale_factor)
-			draw_line(target_pos + Vector2(0, -body_h * 0.48), target_pos + Vector2(body_w, -body_h * 0.15), Color("342b26"), 4.0 * scale_factor)
-			draw_line(target_pos + Vector2(0, -body_h * 0.12), target_pos + Vector2(-body_w * 0.65, body_h * 0.28), Color("29221e"), 5.0 * scale_factor)
-			draw_line(target_pos + Vector2(0, -body_h * 0.12), target_pos + Vector2(body_w * 0.65, body_h * 0.28), Color("29221e"), 5.0 * scale_factor)
-			var bar_width := 30.0 * scale_factor
-			draw_rect(Rect2(target_pos.x - bar_width / 2.0, target_pos.y - body_h - 13.0, bar_width, 4.0), Color("231512"), true)
-			draw_rect(Rect2(target_pos.x - bar_width / 2.0, target_pos.y - body_h - 13.0, bar_width * float(target["hp"]) / 2.0, 4.0), Color("df3429"), true)
-		# Dynamic reticle follows the player's touch/mouse aim position.
+			_draw_zombie_target(target)
+		# Spent brass ejects from the right side of the receiver and falls away.
+		for casing in casing_particles:
+			var casing_pos: Vector2 = casing["pos"]
+			var life_ratio := clampf(float(casing["life"]) / 0.85, 0.0, 1.0)
+			draw_set_transform(casing_pos, float(casing["spin"]) * (1.0 - life_ratio), Vector2.ONE)
+			draw_rect(Rect2(-8, -3, 17, 6), Color("b77b2e"), true)
+			draw_rect(Rect2(-6, -2, 12, 2), Color("f2c36b"), true)
+			draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 		var reticle_color := Color("ff4030") if defense_hit_flash > 0.0 else Color("ffe5b2")
 		var reticle_radius := 14.0 if zoom_mode else (19.0 if aim_mode else 24.0)
 		draw_arc(aim_position, reticle_radius, 0.0, TAU, 36, reticle_color, 2.5)
@@ -1783,16 +2150,94 @@ func _draw() -> void:
 		draw_line(aim_position + Vector2(12, 0), aim_position + Vector2(38, 0), reticle_color, 2.0)
 		draw_line(aim_position + Vector2(0, -38), aim_position + Vector2(0, -12), reticle_color, 2.0)
 		draw_line(aim_position + Vector2(0, 12), aim_position + Vector2(0, 38), reticle_color, 2.0)
+		draw_circle(Vector2(160, 735), 94.0, Color(0.035, 0.025, 0.018, 0.66))
+		draw_arc(Vector2(160, 735), 94.0, 0.0, TAU, 48, Color("d1ad73"), 4.0)
+		draw_circle(Vector2(160, 735), 34.0, Color("96724a", 0.92))
+		draw_arc(Vector2(160, 735), 34.0, 0.0, TAU, 32, Color("f0d2a0"), 3.0)
+		draw_string(ThemeDB.fallback_font, Vector2(42, 850), "НАВЕДЕНИЕ", HORIZONTAL_ALIGNMENT_LEFT, 220, 16, Color("ffe2a4"))
+		draw_circle(Vector2(1405, 745), 90.0, Color("5a1c12", 0.90))
+		draw_arc(Vector2(1405, 745), 90.0, 0.0, TAU, 48, Color("e6a04d"), 5.0)
+		draw_string(ThemeDB.fallback_font, Vector2(1310, 850), "ОГОНЬ", HORIZONTAL_ALIGNMENT_CENTER, 190, 18, Color("ffe2a4"))
 	else:
 		if survivor_texture != null:
-			# Four-direction hand-drawn survivor sheet; calm everyday clothing, no backpack.
 			var source := Rect2(float(animation_frame) * 128.0, float(facing_row) * 160.0, 128.0, 160.0)
 			var stair_bob := sin(stair_step_bob) * 1.5 if stair_transition_active else 0.0
 			var destination := Rect2(player_pos.x - 36.0, player_pos.y - 82.0 + stair_bob, 72.0, 90.0)
 			draw_texture_rect_region(survivor_texture, destination, source)
-		if not defense_mode:
-			_draw_virtual_joystick()
+		_draw_virtual_joystick()
 
+func _draw_clean_balcony_panorama() -> void:
+	# The approved balcony plate contains baked-in attackers and a legacy reload panel.
+	# Repaint the sea/beach and lower control strip; live enemies and controls are drawn later.
+	draw_rect(Rect2(0, 710, 1536, 154), Color(0.075, 0.052, 0.034, 0.96), true)
+	draw_rect(Rect2(0, 710, 1536, 154), Color("a98551"), false, 3.0)
+	draw_rect(Rect2(285, 310, 1251, 235), Color("31596a"), true)
+	for band in range(15):
+		var y := 315.0 + float(band) * 15.0
+		var c := Color("456f7a").lerp(Color("244653"), float(band) / 14.0)
+		draw_rect(Rect2(285, y, 1251, 16), c, true)
+	for wave in range(28):
+		var y := 330.0 + float((wave * 17) % 205)
+		var x := 300.0 + float((wave * 83) % 1160)
+		draw_line(Vector2(x, y), Vector2(x + 70.0 + float(wave % 4) * 12.0, y - 3.0), Color(0.78, 0.88, 0.84, 0.28), 2.0)
+		draw_line(Vector2(x + 20, y + 5), Vector2(x + 52, y + 4), Color(0.95, 0.86, 0.72, 0.20), 1.0)
+	draw_polygon(PackedVector2Array([Vector2(285, 520), Vector2(1536, 500), Vector2(1536, 650), Vector2(285, 650)]), PackedColorArray([Color("9b805d"), Color("c2a178"), Color("907451"), Color("705b43")]))
+	for rock in range(25):
+		var x := 300.0 + float((rock * 71) % 1200)
+		var y := 535.0 + float((rock * 29) % 100)
+		draw_circle(Vector2(x + 8.0, y + 5.0), 5.0 + float(rock % 3) * 2.0, Color("554c40"))
+	# A small yacht remains in the lagoon as a landmark.
+	draw_polygon(PackedVector2Array([Vector2(370, 415), Vector2(490, 415), Vector2(470, 438), Vector2(390, 438)]), PackedColorArray([Color("202a30"), Color("202a30"), Color("10191f"), Color("10191f")]))
+	draw_rect(Rect2(408, 392, 38, 23), Color("d8d0bd"), true)
+	draw_line(Vector2(427, 392), Vector2(427, 365), Color("292c2e"), 3.0)
+	draw_line(Vector2(427, 367), Vector2(455, 390), Color("e0d7c5"), 2.0)
+
+func _draw_machinegun_turret() -> void:
+	var direction := (aim_position - TURRET_PIVOT).normalized()
+	turret_angle = Vector2.UP.angle_to(direction)
+	var recoil_offset := turret_recoil * 9.0
+	draw_set_transform(TURRET_PIVOT + direction * recoil_offset, turret_angle, Vector2.ONE)
+	# Mount and traversing ring.
+	draw_rect(Rect2(-112, -18, 224, 42), Color("252522"), true)
+	draw_rect(Rect2(-92, -25, 184, 12), Color("8c6b3f"), true)
+	draw_rect(Rect2(-28, -206, 56, 190), Color("242a2b"), true)
+	draw_rect(Rect2(-20, -202, 40, 174), Color("536064"), true)
+	draw_rect(Rect2(-11, -205, 22, 182), Color("a5a69a"), true)
+	draw_rect(Rect2(-35, -184, 70, 38), Color("343b3b"), true)
+	draw_rect(Rect2(-24, -230, 48, 35), Color("1b2223"), true)
+	draw_rect(Rect2(-18, -246, 36, 25), Color("9b7a43"), true)
+	draw_rect(Rect2(-9, -262, 18, 20), Color("202525"), true)
+	draw_rect(Rect2(-74, -95, 46, 30), Color("3b403d"), true)
+	draw_rect(Rect2(28, -95, 46, 30), Color("3b403d"), true)
+	draw_rect(Rect2(-112, -12, 224, 12), Color("b18a4f"), true)
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	if muzzle_flash_timer > 0.0:
+		var muzzle := _get_turret_muzzle_position()
+		draw_line(muzzle, aim_position, Color(1.0, 0.78, 0.34, 0.55), 3.0)
+		draw_set_transform(muzzle, turret_angle, Vector2.ONE)
+		draw_circle(Vector2.ZERO, 36.0, Color(1.0, 0.56, 0.12, 0.24))
+		draw_circle(Vector2.ZERO, 21.0, Color(1.0, 0.78, 0.28, 0.62))
+		draw_polygon(PackedVector2Array([Vector2(-13, 0), Vector2(-5, -32), Vector2(0, -10), Vector2(13, -28), Vector2(8, 0), Vector2(25, 10), Vector2(2, 11), Vector2(-10, 25)]), PackedColorArray([Color("ff8a1f"), Color("fff0a0"), Color("ff9a23"), Color("fff0a0"), Color("ffb12d"), Color("fff0a0"), Color("ff8b1e"), Color("ffcf59")]))
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+func _draw_zombie_target(target: Dictionary) -> void:
+	var pos: Vector2 = target["pos"]
+	var scale_factor := float(target["scale"])
+	var skin := Color("777b68")
+	var clothes := Color("403d36") if int(target["hp"]) <= 1 else Color("4a5149")
+	var head := pos + Vector2(0, -43.0 * scale_factor)
+	draw_rect(Rect2(pos.x - 19.0 * scale_factor, pos.y - 15.0 * scale_factor, 38.0 * scale_factor, 62.0 * scale_factor), clothes, true)
+	draw_line(pos + Vector2(-9, 8) * scale_factor, pos + Vector2(-17, 48) * scale_factor, clothes.darkened(0.2), 10.0 * scale_factor)
+	draw_line(pos + Vector2(9, 8) * scale_factor, pos + Vector2(18, 48) * scale_factor, clothes.darkened(0.2), 10.0 * scale_factor)
+	draw_line(pos + Vector2(-13, -5) * scale_factor, pos + Vector2(-34, 22) * scale_factor, skin, 9.0 * scale_factor)
+	draw_line(pos + Vector2(13, -5) * scale_factor, pos + Vector2(34, 18) * scale_factor, skin, 9.0 * scale_factor)
+	draw_circle(head, 15.0 * scale_factor, skin)
+	draw_circle(head + Vector2(-5, -2) * scale_factor, 2.8 * scale_factor, Color("b63b2e"))
+	draw_circle(head + Vector2(5, -2) * scale_factor, 2.8 * scale_factor, Color("b63b2e"))
+	draw_line(head + Vector2(-5, 8) * scale_factor, head + Vector2(6, 9) * scale_factor, Color("2a211d"), 3.0 * scale_factor)
+	if int(target["hp"]) > 1:
+		draw_rect(Rect2(pos.x - 21.0 * scale_factor, pos.y - 80.0 * scale_factor, 42.0 * scale_factor, 5.0 * scale_factor), Color("241512"), true)
+		draw_rect(Rect2(pos.x - 21.0 * scale_factor, pos.y - 80.0 * scale_factor, 21.0 * scale_factor, 5.0 * scale_factor), Color("df3429"), true)
 
 func _draw_coastline_environment() -> void:
 	# v0.27: richer illustrated island panorama framing the playable bunker.

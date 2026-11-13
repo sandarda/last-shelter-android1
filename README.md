@@ -40,3 +40,13 @@ The local package has passed the included static project checks and ZIP integrit
 - `art/characters/survivor_sheet.png` — 4×4 transparent survivor animation sheet.
 - `tools/validate_project.py` — static package validation.
 - `docs/ANDROID_BUILD.md` — detailed GitHub Actions build instructions.
+
+
+## v0.34.0 — room exploration and balcony defense update
+
+- Tapping a room opens an isolated full-screen room view.
+- The survivor moves horizontally only inside rooms; the yellow “УБЕЖИЩЕ” button returns to the bunker overview.
+- A separate stairwell exit returns the survivor to the landing, where up/down controls appear when close enough.
+- All nine rooms have a distinct story description and a contextual activity; story progress is saved.
+- The balcony opens on an empty shoreline. Infected emerge from the water after a short calm interval and grow as they approach.
+- The mounted machine gun follows the aim direction, produces muzzle flash and recoil, ejects spent casings, and has an endless belt.

@@ -30,7 +30,7 @@ LAST SHELTER — STATIC PROJECT CHECK
 [OK] approved bunker and balcony full-screen artwork are loaded and rendered
 [OK] balcony defense scene transitions exist
 [OK] four timed zombie attack waves are implemented
-[OK] machine-gun firing and reload actions exist
+[OK] machine-gun firing and compatibility action exist
 [OK] dynamic ammunition and defense HUD state exist
 [OK] survival resource counters update over approved artwork
 [OK] approved first-person balcony defense artwork is included
@@ -98,12 +98,20 @@ LAST SHELTER — STATIC PROJECT CHECK
 [OK] room interaction rectangles are populated on every floor
 [OK] Android virtual joystick touch tracking is wired
 [OK] high-resolution casual survivor sprite animation is rendered
-[OK] zombie targets spawn and shots require aiming accuracy
+[OK] zombie targets spawn from water and shots follow turret aim
 [OK] late-wave armored zombies require multiple hits
 [OK] lookout room interaction enters the dedicated balcony defense mode
 [OK] escaped zombies damage the shelter and leave the active wave
+[OK] rooms open as isolated full-screen scenes
+[OK] room movement is restricted to left and right
+[OK] individual room story progress is persisted
+[OK] balcony begins with an empty shoreline before water spawns
+[OK] turret rotation, muzzle flash, recoil and ejected casings are rendered
+[OK] machine gun uses an infinite belt without reloading
+[OK] stair direction controls appear at the landing
 [OK] aim and zoom modes change the on-screen reticle
 [OK] survivor sprite sheet is 4x4 high-resolution transparent RGBA
+[OK] survivor sprite sheet can be decoded
 
-105 passed, 0 failed
+113 passed, 0 failed
 NOTE: Static checks do not validate GDScript parsing, runtime behavior, rendering, or Android export.

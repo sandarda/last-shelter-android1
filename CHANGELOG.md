@@ -1,3 +1,29 @@
+# Changelog
+
+## v0.34.1 — Distance-based zombie perspective
+- Zombie scale now derives from each target's progress between its individual water spawn line and the balcony breach line.
+- Uses smoothstep easing for gradual, frame-rate-independent growth from 26–38% at spawn to 155% near the balcony.
+- Removed time-only scale growth so zombies do not grow while standing still or change size inconsistently with movement speed.
+
+
+- Full-screen room scenes with horizontal-only player movement.
+- Yellow Shelter return control and room-to-stairwell exit.
+- Contextual up/down stair controls appear at the stair landing.
+- Individual story threads and activities for all nine rooms, persisted in save data.
+- Balcony defense starts with an empty shoreline; zombies spawn from the water and grow as they approach.
+- Turret aims toward the reticle, fires continuously, flashes at the muzzle, and ejects brass casings.
+- Infinite machine-gun belt; no reload interaction.
+
+# v0.34.0 — Room exploration, stories, and turret controls
+
+- Full-screen room scenes with horizontal-only player movement.
+- Yellow Shelter return control and room-to-stairwell exit.
+- Contextual up/down stair controls appear at the stair landing.
+- Individual story threads and activities for all nine rooms, persisted in save data.
+- Balcony defense starts with an empty shoreline; zombies spawn from the water and grow as they approach.
+- Turret aims toward the reticle, fires continuously, flashes at the muzzle, and ejects brass casings.
+- Infinite machine-gun belt; no reload interaction.
+
 # Журнал изменений
 
 ## v0.11
