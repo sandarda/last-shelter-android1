@@ -171,6 +171,7 @@ ignore_patterns = {line.strip().lstrip("\ufeff") for line in ignore_text.splitli
 print("DEBUG ROOT:", ROOT)
 print("DEBUG GITIGNORE EXISTS:", gitignore.is_file())
 print("DEBUG PATTERNS:", sorted(ignore_patterns))
+print("DEBUG ROOT FILES:", [repr(p.name) for p in ROOT.iterdir()])
 require(gitignore.is_file() and {".godot/", ".import/", "build/", "*.keystore", "*.jks"}.issubset(ignore_patterns), "generated Godot files and signing keys are excluded from Git")
 if project.exists():
     ptxt = project.read_text(encoding="utf-8")
