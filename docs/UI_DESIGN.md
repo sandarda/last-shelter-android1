@@ -1,9 +1,7 @@
-# Approved visual design — v0.35.0
+# UI and visual design — v0.36.0
 
-The accepted cliffside bunker artwork is the actual full-screen hub background. The right-side action list has been removed. The bottom command strip is the primary navigation surface, while the nine room areas remain directly tappable.
-
-Every room opens a full-screen illustrated backplate in the same warm, highly detailed stone/wood/metal style. The nine room backplates are loaded as image assets; the game no longer draws simplified procedural room interiors as a fallback.
-
-The balcony defense screen uses a detailed approved image plate. A separate textured turret sprite is drawn on a rotating pivot and follows the player's manual aim. Zombie targets use a textured sprite and scale smoothly according to their travelled distance from the waterline to the balcony.
-
-The viewport remains 1536×864 (16:9). Transparent interaction zones and touch controls are layered over the artwork; they do not replace the artwork with generic panels.
+- Main location: approved full-screen cliffside bunker artwork with warm detailed rooms, beach, and a large permanent hero illustration at the lower left. No small player sprite moves around the map.
+- Navigation: illustrated left-side navigation and bottom action buttons; the old right-side action drawer is absent.
+- Rooms: each of the nine rooms opens its own independent full-screen illustration. A static hero portrait is shown in the room view; no tiny walking avatar or movement joystick is used.
+- Defense: sniper rifle replaces the mounted machine gun. The left `ПРИЦЕЛИТЬСЯ` control toggles the optical view; the player drags on the beach to adjust aim; the right `ВЫСТРЕЛ` control fires one round. The `R` key reloads.
+- Zombies: animated 4×4 transparent sprite sheet, 16 frames, looping walk cycle, and perspective scaling as the infected approach the shelter.

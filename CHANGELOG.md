@@ -1,4 +1,14 @@
-# Changelog
+# CHANGELOG
+
+## v0.36.0
+- Persistent hero portrait replaces the tiny moving avatar on the main bunker map.
+- Static hero presence in room views; no miniature room movement controls.
+- Sniper rifle defense replaces the machine gun: left-side optical aim, right-side single-shot fire, 5-round magazine, 25-round reserve, reload.
+- Animated 4×4 transparent RGBA zombie sprite sheet with 16 walking frames.
+- Retains the nine approved high-detail room illustrations, autosave, room stories, and Android export workflow.
+
+
+
 
 ## v0.35.0 — Approved visual implementation pass
 

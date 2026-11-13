@@ -1,39 +1,16 @@
-# Архитектура убежища — игровая схема v0.35.0
+# Shelter architecture — v0.36.0
 
-Убежище вырублено внутри скалы; игровой экран использует утверждённый полноэкранный срез. Три горизонтальные игровые плоскости привязаны к визуальным уровням на изображении.
+The project uses a fixed, illustrated cliffside bunker hub. The hero is represented by a large permanent portrait in the hub art rather than a tiny roaming character. Room taps open separate full-screen illustrations.
 
-## Верхний этаж — жилой и смотровой
-- Спальня.
-- Гостиная.
-- Смотровая площадка с выходом в режим обороны балкона.
+## Art assets
+- `art/ui/approved_fullscreen.png` — current hub artwork and persistent hero illustration.
+- `art/rooms/` — nine full-screen room images.
+- `art/characters/hero_portrait.png` — transparent hero portrait for room scenes.
+- `art/defense/zombie_walk_4x4.png` — 16-frame RGBA zombie walk cycle.
+- `art/defense/zombie.png` — fallback infected artwork.
 
-Связность: спальня ↔ гостиная ↔ смотровая.
-
-## Средний этаж — лаборатория и хозяйственные помещения
-- Лаборатория.
-- Оружейная.
-- Кухня.
-
-Связность: лаборатория ↔ оружейная ↔ кухня.
-
-## Нижний этаж — производство и запасы
-- Теплица.
-- Мастерская.
-- Склад.
-
-Связность: теплица ↔ мастерская ↔ склад.
-
-## Перемещение
-
-Геометрия движения задаётся отдельно для каждого этажа: нижний y=680, средний y=470, верхний y=250 в координатах игрового viewport 1536×864. Центральная винтовая лестница соединяет соседние этажи; герой сначала подходит к площадке, затем проходит по последовательности точек лестницы. Смена этажа происходит после завершения маршрута.
-
-Игрок перемещается по этажу касанием/мышью, клавиатурой или виртуальным джойстиком. Внутри каждой полноэкранной комнаты разрешено горизонтальное перемещение. Интерактивная мебель запускает действие после подхода героя к выбранной точке. Смотровая площадка запускает отдельную сцену обороны.
-
-## Визуальные стандарты
-
-- `art/ui/approved_fullscreen.png` — основной экран убежища без правого списка действий.
-- `art/ui/approved_balcony.png` — экран обороны балкона.
-- `art/rooms/*.png` — отдельные полноэкранные изображения всех девяти комнат; процедурные интерьерные заглушки не используются.
-- `art/defense/turret.png` — вращающаяся текстурированная турель.
-- `art/defense/zombie.png` — текстурированный заражённый с масштабированием по дистанции.
-- Персонаж — мужчина средних лет в повседневной одежде, без рюкзака и тяжёлой брони; походка спокойная.
+## Gameplay systems
+- Survival resources and existing save migration remain in `scripts/game.gd`.
+- Sniper defense uses a 5-round magazine and 25-round reserve, with manual aiming, optical zoom, single-shot firing, and reload.
+- Zombies advance along the beach, animate through the sprite sheet, and scale with their distance from the shelter.
+- Room stories and progress remain stored in the existing save file.

@@ -1,6 +1,6 @@
 extends Node2D
 
-# Last Shelter v0.35 — approved bunker artwork, full-screen room art, and textured turret defense.
+# Last Shelter v0.36 — approved hero portrait, sniper defense, animated zombies, and full-screen room art.
 const PLAYER_SPEED := 210.0
 const ROOM_W := 360.0
 const ROOM_H := 210.0
@@ -41,10 +41,10 @@ const ROOM_STORY_STEPS := {
 	"kitchen": ["Проверка полок показывает, какие продукты нужно использовать в первую очередь.", "В старой тетради найден рецепт простого сытного блюда.", "Герой составляет меню на несколько дней и сокращает потери припасов."],
 	"workshop": ["Осмотр верстака выявляет изношенную деталь насосной системы.", "Среди металлолома удаётся подобрать подходящую заготовку.", "Инструмент восстановлен; мастерская готова к более сложному ремонту."],
 	"storage": ["В учёте обнаруживается расхождение между записями и фактическими запасами.", "За ящиками найден небольшой тайник с забытыми припасами.", "Склад рассортирован, тайник внесён в журнал, экспедиционные наборы подготовлены."],
-	"arsenal": ["Проверка выявляет износ нескольких деталей оружия.", "После обслуживания оружие снова работает надёжно.", "Оборона готова; герой отмечает, что боезапас пулемёта в смотровой бесконечный."],
+	"arsenal": ["Проверка выявляет износ нескольких деталей оружия.", "После обслуживания оружие снова работает надёжно.", "Оборона готова; герой отмечает, что снайперская винтовка всегда должна быть пристреляна и готова к обороне."],
 	"greenhouse": ["На грядках появляются первые здоровые ростки.", "Герой восстанавливает полив и распределяет семена по грядкам.", "Созревает первый небольшой урожай, повышая автономность убежища."],
 	"techblock": ["В лаборатории обнаружены неизвестные следы на образцах с побережья.", "Герой проверяет состав воды и сравнивает результаты с прежними записями.", "Анализ завершён: новые данные внесены в журнал исследований."],
-	"lookout": ["На горизонте замечен слабый отблеск у скрытой яхты.", "При наблюдении становится ясно: движение в воде приближается к берегу.", "Подана тревога. Герой занимает пулемёт и защищает побережье."]
+	"lookout": ["На горизонте замечен слабый отблеск у скрытой яхты.", "При наблюдении становится ясно: движение в воде приближается к берегу.", "Подана тревога. Герой занимает позицию со снайперской винтовкой и защищает побережье."]
 }
 
 var current_floor := 2
@@ -94,7 +94,6 @@ var joystick_radius := 72.0
 # Illustrated room backplates and a 4-direction / 4-frame survivor sprite sheet.
 var room_textures: Dictionary = {}
 var approved_ui_texture: Texture2D
-var balcony_ui_texture: Texture2D
 var room_mode := false
 var room_player_x := 768.0
 var room_move_axis := 0.0
@@ -108,13 +107,11 @@ var room_stairs_button: Button
 var room_shelter_button: Button
 var aim_touch_index := -1
 var casing_particles: Array[Dictionary] = []
-var turret_recoil := 0.0
-var turret_angle := 0.0
-const TURRET_PIVOT := Vector2(820.0, 815.0)
-# Balcony defense mode: real-time turret combat state.
+var sniper_recoil := 0.0
+# Balcony defense mode: manual sniper rifle and animated shoreline attackers.
 var defense_mode := false
 var defense_wave := 1
-var defense_wave_counts := [8, 12, 16, 20]
+var defense_wave_counts := [3, 4, 5, 6]
 var defense_total_remaining := 8
 var defense_spawned := 0
 var defense_active_targets := 0
@@ -126,13 +123,13 @@ var defense_wave_break := 0.0
 var ammo_loaded := 120
 var ammo_reserve := 300
 var fire_held := false
-var aim_position := Vector2(820, 440)
+var aim_position := Vector2(1360, 545)
 var defense_hit_flash := 0.0
 var muzzle_flash_timer := 0.0
 var defense_targets: Array[Dictionary] = []
 var defense_target_spawn_points: Array[Vector2] = [
-	Vector2(420, 385), Vector2(560, 365), Vector2(700, 380), Vector2(850, 370),
-	Vector2(1000, 385), Vector2(1160, 400), Vector2(650, 430), Vector2(930, 425)
+	Vector2(1210, 420), Vector2(1270, 438), Vector2(1330, 415), Vector2(1390, 435),
+	Vector2(1450, 425), Vector2(1490, 455), Vector2(1250, 470), Vector2(1410, 465)
 ]
 var aim_mode := false
 var zoom_mode := false
@@ -143,8 +140,11 @@ var main_hotspots: Array[Control] = []
 var dynamic_counters: Dictionary = {}
 var hub_overlay_controls: Array[Control] = []
 var survivor_texture: Texture2D
-var turret_texture: Texture2D
 var zombie_texture: Texture2D
+var zombie_walk_texture: Texture2D
+var hero_portrait_texture: Texture2D
+var zombie_animation_clock := 0.0
+var zombie_animation_frame := 0
 var animation_clock := 0.0
 var animation_frame := 0
 var facing_row := 0 # 0 down, 1 left, 2 right, 3 up
@@ -261,11 +261,11 @@ func _build_ui() -> void:
 		layer.add_child(node)
 
 	# Dynamic counters cover only the numeric portions of the approved header art.
-	_add_dynamic_counter(layer, "day", Rect2(410, 5, 95, 42), 15)
-	_add_dynamic_counter(layer, "health", Rect2(610, 8, 92, 30), 15)
-	_add_dynamic_counter(layer, "hunger", Rect2(790, 8, 90, 30), 15)
-	_add_dynamic_counter(layer, "thirst", Rect2(945, 8, 90, 30), 15)
-	_add_dynamic_counter(layer, "energy", Rect2(1120, 8, 90, 30), 15)
+	_add_dynamic_counter(layer, "day", Rect2(84, 8, 100, 50), 14)
+	_add_dynamic_counter(layer, "health", Rect2(300, 8, 82, 32), 15)
+	_add_dynamic_counter(layer, "hunger", Rect2(438, 8, 66, 32), 15)
+	_add_dynamic_counter(layer, "thirst", Rect2(575, 8, 70, 32), 15)
+	_add_dynamic_counter(layer, "energy", Rect2(720, 8, 72, 32), 15)
 	# Resources not shown in the compact approved header remain data-only.
 	_add_dynamic_counter(layer, "ammo", Rect2(-500, -500, 1, 1), 1)
 	_add_dynamic_counter(layer, "wood", Rect2(-500, -500, 1, 1), 1)
@@ -273,22 +273,36 @@ func _build_ui() -> void:
 	_add_dynamic_counter(layer, "medkits", Rect2(-500, -500, 1, 1), 1)
 	# The right-side action list has been removed from the hub.
 	# Main hub controls match the approved bottom command strip.
-	_add_hotspot(layer, Rect2(18, 770, 170, 90), "Карта", _explore_island)
-	_add_hotspot(layer, Rect2(195, 770, 170, 90), "Охрана", _defend_shelter)
-	_add_hotspot(layer, Rect2(372, 770, 170, 90), "Строительство", _upgrade_barricades)
-	_add_hotspot(layer, Rect2(548, 770, 170, 90), "Исследования", _upgrade_workshop)
-	_add_hotspot(layer, Rect2(725, 770, 180, 90), "Производство", _work)
-	_add_hotspot(layer, Rect2(910, 770, 180, 90), "Инвентарь", func(): _set_message("Запасы: дерево %d, еда %d, вода %d, металл %d, аптечки %d." % [wood, food, water, scrap, medkits]))
-	_add_hotspot(layer, Rect2(1098, 770, 180, 90), "Журнал", _journal_update)
-	_add_hotspot(layer, Rect2(1290, 770, 240, 90), "Оборона", _enter_balcony_defense)
+	# Main screen hit areas follow the approved v0.36 hero-and-bunker composition.
+	_add_hotspot(layer, Rect2(12, 108, 108, 96), "Обзор", func(): _set_message("Общий план убежища. Герой остаётся постоянным персонажем интерфейса."))
+	_add_hotspot(layer, Rect2(12, 205, 108, 88), "Задания", _journal_update)
+	_add_hotspot(layer, Rect2(12, 294, 108, 84), "Крафт", _craft_trap)
+	_add_hotspot(layer, Rect2(12, 380, 108, 84), "Ремонт", _repair_shelter)
+	_add_hotspot(layer, Rect2(12, 466, 108, 84), "Улучшения", _upgrade_barricades)
+	_add_hotspot(layer, Rect2(12, 552, 108, 84), "Запасы", func(): _set_message("Запасы: дерево %d, еда %d, вода %d, металл %d, аптечки %d." % [wood, food, water, scrap, medkits]))
+	_add_hotspot(layer, Rect2(12, 638, 108, 84), "Радио", _use_radio)
+	_add_hotspot(layer, Rect2(12, 724, 108, 84), "Дневник", _journal_update)
+	_add_hotspot(layer, Rect2(500, 728, 175, 118), "Оборона", _enter_balcony_defense)
+	_add_hotspot(layer, Rect2(675, 728, 170, 118), "Разведка", _explore_island)
+	_add_hotspot(layer, Rect2(845, 728, 170, 118), "Работы", _work)
+	_add_hotspot(layer, Rect2(1015, 728, 170, 118), "Крафт", _upgrade_workshop)
+	_add_hotspot(layer, Rect2(1185, 728, 160, 118), "Отдых", _rest)
 	_add_hotspot(layer, Rect2(1465, 0, 70, 64), "Настройки", _toggle_action_panel)
-	# Balcony defense: one left-side aiming zone and one right-side hold-to-fire control.
-	_add_defense_hotspot(layer, Rect2(14, 105, 205, 78), "В УБЕЖИЩЕ", _leave_balcony_defense)
-	var fire_button := _add_defense_hotspot(layer, Rect2(1300, 650, 210, 190), "ОГОНЬ", _fire_machinegun)
-	fire_button.button_down.connect(_start_firing)
-	fire_button.button_up.connect(_stop_firing)
+	# Sniper defense: aim is a toggle on the left; every right-button press fires one round.
+	var back_button := _add_defense_hotspot(layer, Rect2(14, 105, 205, 78), "В УБЕЖИЩЕ", _leave_balcony_defense)
+	back_button.text = "← В УБЕЖИЩЕ"
+	back_button.add_theme_font_size_override("font_size", 20)
+	back_button.add_theme_color_override("font_color", Color("ffe0a0"))
+	var aim_button := _add_defense_hotspot(layer, Rect2(24, 720, 245, 126), "ПРИЦЕЛИТЬСЯ", _toggle_aim_mode)
+	aim_button.text = "ПРИЦЕЛИТЬСЯ"
+	aim_button.add_theme_font_size_override("font_size", 22)
+	aim_button.add_theme_color_override("font_color", Color("ffe0a0"))
+	var shoot_button := _add_defense_hotspot(layer, Rect2(1270, 720, 245, 126), "ВЫСТРЕЛ", _fire_sniper)
+	shoot_button.text = "ВЫСТРЕЛ"
+	shoot_button.add_theme_font_size_override("font_size", 24)
+	shoot_button.add_theme_color_override("font_color", Color("ffe0a0"))
 	defense_status_label = Label.new()
-	defense_status_label.position = Vector2(1270, 90)
+	defense_status_label.position = Vector2(1220, 88)
 	defense_status_label.size = Vector2(250, 120)
 	defense_status_label.add_theme_font_size_override("font_size", 18)
 	defense_status_label.add_theme_color_override("font_color", Color("fff0d2"))
@@ -298,8 +312,8 @@ func _build_ui() -> void:
 	defense_status_label.visible = false
 	layer.add_child(defense_status_label)
 	defense_ammo_label = Label.new()
-	defense_ammo_label.position = Vector2(1325, 525)
-	defense_ammo_label.size = Vector2(185, 42)
+	defense_ammo_label.position = Vector2(660, 20)
+	defense_ammo_label.size = Vector2(220, 42)
 	defense_ammo_label.add_theme_font_size_override("font_size", 20)
 	defense_ammo_label.add_theme_color_override("font_color", Color("ffe18b"))
 	defense_ammo_label.visible = false
@@ -314,7 +328,7 @@ func _build_ui() -> void:
 	room_left_button = _add_room_control(layer, Rect2(36, 720, 132, 112), "◀", func(): _set_room_move(0.0))
 	room_right_button = _add_room_control(layer, Rect2(182, 720, 132, 112), "▶", func(): _set_room_move(0.0))
 	room_action_button = _add_room_control(layer, Rect2(1035, 735, 270, 94), "ДЕЙСТВИЕ", _run_room_story_action)
-	room_stairs_button = _add_room_control(layer, Rect2(1315, 735, 190, 94), "К ЛЕСТНИЦЕ", _leave_room_to_stairs)
+	room_stairs_button = _add_room_control(layer, Rect2(1315, 735, 190, 94), "В УБЕЖИЩЕ", _leave_room_view)
 	room_left_button.button_down.connect(func(): _set_room_move(-1.0))
 	room_left_button.button_up.connect(func(): _set_room_move(0.0))
 	room_right_button.button_down.connect(func(): _set_room_move(1.0))
@@ -444,8 +458,9 @@ func _add_defense_hotspot(parent: CanvasLayer, rect: Rect2, caption: String, cal
 	button.focus_mode = Control.FOCUS_NONE
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	var clear := StyleBoxFlat.new()
-	clear.bg_color = Color(0, 0, 0, 0)
-	clear.border_color = Color(0, 0, 0, 0)
+	clear.bg_color = Color(0.045, 0.028, 0.012, 0.88)
+	clear.border_color = Color("a77b3e")
+	clear.set_border_width_all(3)
 	var hover := StyleBoxFlat.new()
 	hover.bg_color = Color(1.0, 0.70, 0.20, 0.12)
 	hover.border_color = Color(1.0, 0.78, 0.35, 0.55)
@@ -469,6 +484,12 @@ func _set_defense_controls_visible(show_controls: bool) -> void:
 		control.visible = not room_mode
 	for control in room_controls:
 		control.visible = room_mode and not show_controls
+	if is_instance_valid(room_left_button):
+		room_left_button.visible = false
+	if is_instance_valid(room_right_button):
+		room_right_button.visible = false
+	if is_instance_valid(room_stairs_button):
+		room_stairs_button.visible = false
 	if is_instance_valid(defense_status_label):
 		defense_status_label.visible = show_controls
 	if is_instance_valid(defense_ammo_label):
@@ -492,23 +513,22 @@ func _enter_balcony_defense() -> void:
 	defense_active_targets = 0
 	defense_targets.clear()
 	defense_kills = 0
-	defense_spawn_clock = 3.2
+	defense_spawn_clock = 2.0
 	defense_breach_clock = 0.0
 	defense_shot_clock = 0.0
 	defense_wave_break = 0.0
 	fire_held = false
+	aim_mode = false
+	zoom_mode = false
 	room_mode = false
 	room_move_axis = 0.0
-	if is_instance_valid(stair_up_button):
-		stair_up_button.visible = false
-	if is_instance_valid(stair_down_button):
-		stair_down_button.visible = false
-	ammo_loaded = 120
-	ammo_reserve = 0
+	ammo_loaded = 5
+	ammo_reserve = 25
 	casing_particles.clear()
-	turret_recoil = 0.0
+	sniper_recoil = 0.0
+	aim_position = Vector2(1360.0, 545.0)
 	_set_defense_controls_visible(true)
-	_set_message("Заражённые выходят из воды. Наводи пулемёт вручную и не подпускай их к укреплениям.")
+	_set_message("Зомби выходят на берег. Нажми «ПРИЦЕЛИТЬСЯ», наведи оптику и стреляй по одному патрону.")
 	_update_defense_hud()
 	queue_redraw()
 
@@ -517,6 +537,8 @@ func _leave_balcony_defense() -> void:
 		return
 	defense_mode = false
 	fire_held = false
+	aim_mode = false
+	zoom_mode = false
 	_set_defense_controls_visible(false)
 	_save_game_silent()
 	_set_message("Ты вернулся в убежище. Уничтожено зомби: %d." % defense_kills)
@@ -524,27 +546,27 @@ func _leave_balcony_defense() -> void:
 	queue_redraw()
 
 func _start_firing() -> void:
-	fire_held = true
+	fire_held = false
 
 func _stop_firing() -> void:
 	fire_held = false
 
-func _fire_machinegun() -> void:
+func _fire_sniper() -> void:
 	if not defense_mode:
 		return
-	# The belt is endless: firing never consumes ammunition and never requires reloading.
-	defense_shot_clock = 0.10
-	muzzle_flash_timer = 0.085
-	turret_recoil = 1.0
-	var muzzle := _get_turret_muzzle_position()
-	var shot_end := aim_position
+	if ammo_loaded <= 0:
+		_set_message("Патроны закончились. Нажми R для перезарядки.")
+		return
+	ammo_loaded -= 1
+	muzzle_flash_timer = 0.12
+	sniper_recoil = 1.0
 	var hit_index := -1
 	var hit_distance := INF
 	for i in range(defense_targets.size()):
 		var target: Dictionary = defense_targets[i]
 		var center: Vector2 = target["pos"] + Vector2(0, -78.0 * float(target["scale"]))
-		var distance := _distance_to_segment(center, muzzle, shot_end)
-		var radius := 46.0 * float(target["scale"])
+		var distance := center.distance_to(aim_position)
+		var radius := 34.0 * float(target["scale"])
 		if distance <= radius and distance < hit_distance:
 			hit_index = i
 			hit_distance = distance
@@ -555,55 +577,39 @@ func _fire_machinegun() -> void:
 			defense_targets.remove_at(hit_index)
 			defense_total_remaining = maxi(0, defense_total_remaining - 1)
 			defense_kills += 1
-			defense_hit_flash = 0.18
-			_set_message("Попадание! Уничтожено заражённых: %d." % defense_kills)
+			defense_hit_flash = 0.20
+			_set_message("Точное попадание! Уничтожено заражённых: %d." % defense_kills)
 		else:
 			target["hp"] = hp
 			defense_targets[hit_index] = target
-			defense_hit_flash = 0.08
+			defense_hit_flash = 0.10
+			_set_message("Попадание! Цель ещё движется — нужен второй выстрел.")
 	else:
-		_set_message("Очередь ушла в сторону. Скорректируй наведение.")
-	var eject_direction := (aim_position - TURRET_PIVOT).normalized()
-	var turret_rotation := Vector2.UP.angle_to(eject_direction)
-	var eject_position := TURRET_PIVOT + Vector2(62, -86).rotated(turret_rotation)
-	var eject_velocity := Vector2(145.0, -95.0).rotated(turret_rotation * 0.45)
-	casing_particles.append({"pos": eject_position, "vel": eject_velocity, "life": 0.85, "spin": randf_range(-9.0, 9.0)})
-	if casing_particles.size() > 36:
-		casing_particles.pop_front()
+		_set_message("Промах. Скорректируй положение оптического прицела.")
 	defense_active_targets = defense_targets.size()
 	if defense_total_remaining == 0 and defense_active_targets == 0 and defense_spawned >= int(defense_wave_counts[defense_wave - 1]):
 		_complete_defense_wave()
 	_update_defense_hud()
 	queue_redraw()
 
-func _distance_to_segment(point: Vector2, start: Vector2, finish: Vector2) -> float:
-	var segment := finish - start
-	var length_sq := segment.length_squared()
-	if length_sq <= 0.001:
-		return point.distance_to(start)
-	var t := clampf((point - start).dot(segment) / length_sq, 0.0, 1.0)
-	return point.distance_to(start + segment * t)
-
-func _get_turret_muzzle_position() -> Vector2:
-	var direction := (aim_position - TURRET_PIVOT).normalized()
-	return TURRET_PIVOT + direction * 330.0
-
-func _reload_machinegun() -> void:
-	# Kept for compatibility with older saves; the balcony gun is permanently belt-fed.
-	ammo_loaded = 120
-	ammo_reserve = 0
-	_set_message("Пулемёт с бесконечной лентой. Перезарядка не требуется.")
+func _reload_sniper() -> void:
+	if ammo_loaded >= 5 or ammo_reserve <= 0:
+		return
+	var needed := 5 - ammo_loaded
+	var amount := mini(needed, ammo_reserve)
+	ammo_loaded += amount
+	ammo_reserve -= amount
+	_set_message("Винтовка перезаряжена: %d/5. Запас: %d." % [ammo_loaded, ammo_reserve])
 	_update_defense_hud()
 
 func _toggle_aim_mode() -> void:
 	aim_mode = not aim_mode
-	_set_message("Точный прицел включён." if aim_mode else "Точный прицел выключен.")
+	zoom_mode = aim_mode
+	_set_message("Оптический прицел включён. Веди палец по экрану для наведения." if aim_mode else "Обычный обзор побережья.")
 	queue_redraw()
 
 func _toggle_zoom() -> void:
-	zoom_mode = not zoom_mode
-	_set_message("Оптическое увеличение включено." if zoom_mode else "Обычный обзор восстановлен.")
-	queue_redraw()
+	_toggle_aim_mode()
 
 func _complete_defense_wave() -> void:
 	if defense_wave >= 4:
@@ -621,7 +627,11 @@ func _process_defense(delta: float) -> void:
 		defense_hit_flash = maxf(0.0, defense_hit_flash - delta)
 	if muzzle_flash_timer > 0.0:
 		muzzle_flash_timer = maxf(0.0, muzzle_flash_timer - delta)
-	turret_recoil = move_toward(turret_recoil, 0.0, delta * 5.5)
+	sniper_recoil = move_toward(sniper_recoil, 0.0, delta * 4.0)
+	zombie_animation_clock += delta
+	if zombie_animation_clock >= 0.085:
+		zombie_animation_clock = 0.0
+		zombie_animation_frame = (zombie_animation_frame + 1) % 16
 	for casing_index in range(casing_particles.size() - 1, -1, -1):
 		var casing: Dictionary = casing_particles[casing_index]
 		var casing_pos: Vector2 = casing["pos"]
@@ -645,22 +655,15 @@ func _process_defense(delta: float) -> void:
 			defense_active_targets = 0
 			defense_spawn_clock = 0.5
 			_set_message("Началась волна %d/4!" % defense_wave)
-	if fire_held:
-		defense_shot_clock -= delta
-		if defense_shot_clock <= 0.0:
-			_fire_machinegun()
-			if not defense_mode:
-				return
-			defense_shot_clock = 0.10
 	if defense_total_remaining > 0 and defense_spawned < int(defense_wave_counts[defense_wave - 1]):
 		defense_spawn_clock -= delta
 		if defense_spawn_clock <= 0.0:
 			var spawn_index := randi_range(0, defense_target_spawn_points.size() - 1)
 			var spawn_pos: Vector2 = defense_target_spawn_points[spawn_index]
-			var target_scale := randf_range(0.26, 0.38)
+			var target_scale := randf_range(0.22, 0.30)
 			# Store the surf line and initial size so perspective scale is derived
 			# from actual beach progress, not elapsed time.
-			defense_targets.append({"pos": spawn_pos, "spawn_y": spawn_pos.y, "start_scale": target_scale, "hp": 1 if defense_wave < 3 else 2, "scale": target_scale, "speed": 30.0 + float(defense_wave) * 5.0})
+			defense_targets.append({"pos": spawn_pos, "spawn_y": spawn_pos.y, "start_scale": target_scale, "hp": 1 if defense_wave < 3 else 2, "scale": target_scale, "speed": 24.0 + float(defense_wave) * 4.0})
 			defense_spawned += 1
 			defense_active_targets = defense_targets.size()
 			defense_spawn_clock = maxf(0.85, 2.1 - float(defense_wave) * 0.22)
@@ -676,10 +679,10 @@ func _process_defense(delta: float) -> void:
 		# they approach the foreground. This is frame-rate independent.
 		var spawn_y: float = float(target.get("spawn_y", 385.0))
 		var start_scale: float = float(target.get("start_scale", 0.30))
-		var approach_progress := clampf(inverse_lerp(spawn_y, 640.0, pos.y), 0.0, 1.0)
+		var approach_progress := clampf(inverse_lerp(spawn_y, 700.0, pos.y), 0.0, 1.0)
 		var perspective_progress := approach_progress * approach_progress * (3.0 - 2.0 * approach_progress)
-		target["scale"] = lerpf(start_scale, 1.55, perspective_progress)
-		if pos.y >= 640.0:
+		target["scale"] = lerpf(start_scale, 1.18, perspective_progress)
+		if pos.y >= 700.0:
 			shelter_integrity = maxf(0.0, shelter_integrity - (5.0 + float(defense_wave)))
 			defense_total_remaining = maxi(0, defense_total_remaining - 1)
 			defense_targets.remove_at(i)
@@ -693,11 +696,11 @@ func _process_defense(delta: float) -> void:
 
 func _update_defense_hud() -> void:
 	if dynamic_counters.has("ammo"):
-		dynamic_counters["ammo"].text = "∞" if defense_mode else str(ammo_loaded)
+		dynamic_counters["ammo"].text = (str(ammo_loaded) + "/5") if defense_mode else str(ammo_loaded)
 	if is_instance_valid(defense_status_label):
 		defense_status_label.text = "ВОЛНА %d/4\nЗОМБИ: %d\nУБЕЖИЩЕ: %d%%" % [defense_wave, defense_total_remaining, int(shelter_integrity)]
 	if is_instance_valid(defense_ammo_label):
-		defense_ammo_label.text = "БОЕЗАПАС\nБЕСКОНЕЧНЫЙ"
+		defense_ammo_label.text = "ПАТРОНЫ  %d / 5     ЗАПАС %d" % [ammo_loaded, ammo_reserve]
 
 func _add_room_story_text() -> void:
 	var story: Dictionary = ROOM_STORIES.get(selected_room_id, ROOM_STORIES["living"])
@@ -797,20 +800,8 @@ func _run_room_story_action() -> void:
 	_update_ui()
 
 func _process_room_mode(delta: float) -> void:
-	var axis := Input.get_axis("ui_left", "ui_right")
-	if absf(room_move_axis) > 0.05:
-		axis = room_move_axis
-	elif absf(virtual_axis.x) > 0.08:
-		axis = virtual_axis.x
-	if absf(axis) > 0.08:
-		room_player_x = clampf(room_player_x + axis * PLAYER_SPEED * 1.35 * delta, 145.0, 1390.0)
-		_update_facing(Vector2(axis, 0.0))
-		animation_clock += delta
-		if animation_clock >= 0.12:
-			animation_clock = 0.0
-			animation_frame = (animation_frame + 1) % 4
-	else:
-		animation_frame = 0
+	# The hero is presented as a static, prominent character portrait in rooms;
+	# room navigation is by interaction controls, not a tiny roaming avatar.
 	time_fraction += delta * 2.0
 	var elapsed_minutes := int(time_fraction)
 	if elapsed_minutes > 0:
@@ -832,11 +823,8 @@ func _draw_room_view() -> void:
 	# Darken the upper/lower edges so room controls read clearly without covering the room.
 	draw_rect(Rect2(0, 0, 1536, 78), Color(0.035, 0.025, 0.018, 0.80), true)
 	draw_rect(Rect2(0, 690, 1536, 174), Color(0.035, 0.025, 0.018, 0.36), true)
-	if survivor_texture != null:
-		var source := Rect2(float(animation_frame) * 128.0, float(facing_row) * 160.0, 128.0, 160.0)
-		var destination := Rect2(room_player_x - 68.0, 475.0, 136.0, 190.0)
-		draw_texture_rect_region(survivor_texture, destination, source)
-	draw_string(ThemeDB.fallback_font, Vector2(40, 205), "←  ПЕРЕМЕЩЕНИЕ ПО ПОЛУ  →", HORIZONTAL_ALIGNMENT_LEFT, 420, 18, Color("f4d7a7"))
+	if hero_portrait_texture != null:
+		draw_texture_rect(hero_portrait_texture, Rect2(20.0, 560.0, 280.0, 250.0), false)
 	draw_string(ThemeDB.fallback_font, Vector2(1120, 700), "ДЕЙСТВИЕ В ПОМЕЩЕНИИ", HORIZONTAL_ALIGNMENT_CENTER, 330, 17, Color("f4d7a7"))
 
 func _select_and_run_room(room_id: String, room_name: String, callback: Callable) -> void:
@@ -1004,14 +992,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if defense_mode:
 		if event is InputEventKey:
-			if event.keycode == KEY_SPACE:
-				fire_held = event.pressed
-				if event.pressed and not event.echo:
-					_fire_machinegun()
+			if event.pressed and not event.echo and event.keycode == KEY_SPACE:
+				_fire_sniper()
 				get_viewport().set_input_as_handled()
 				return
 			if event.pressed and not event.echo and event.keycode == KEY_R:
-				_set_message("Бесконечная лента: перезарядка не нужна.")
+				_reload_sniper()
 				get_viewport().set_input_as_handled()
 				return
 			if event.pressed and not event.echo and event.keycode == KEY_ESCAPE:
@@ -1019,70 +1005,37 @@ func _unhandled_input(event: InputEvent) -> void:
 				get_viewport().set_input_as_handled()
 				return
 		if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-			aim_position = Vector2(clampf(event.position.x, 250.0, 1300.0), clampf(event.position.y, 250.0, 650.0))
+			aim_position = Vector2(clampf(event.position.x, 1050.0, 1510.0), clampf(event.position.y, 350.0, 690.0))
 			queue_redraw()
 		elif event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
-			aim_position = Vector2(clampf(event.position.x, 250.0, 1300.0), clampf(event.position.y, 250.0, 650.0))
+			aim_position = Vector2(clampf(event.position.x, 1050.0, 1510.0), clampf(event.position.y, 350.0, 690.0))
 			queue_redraw()
 		elif event is InputEventScreenTouch and event.pressed:
-			if event.position.x < 470.0 and event.position.y > 350.0:
+			if event.position.y < 710.0 and event.position.x > 240.0:
 				aim_touch_index = event.index
 				get_viewport().set_input_as_handled()
 		elif event is InputEventScreenTouch and not event.pressed and event.index == aim_touch_index:
 			aim_touch_index = -1
 		elif event is InputEventScreenDrag and event.index == aim_touch_index:
-			aim_position.x = clampf(aim_position.x + event.relative.x * 1.8, 280.0, 1280.0)
-			aim_position.y = clampf(aim_position.y + event.relative.y * 1.5, 300.0, 630.0)
+			var sensitivity := 1.0 if aim_mode else 0.65
+			aim_position.x = clampf(aim_position.x + event.relative.x * sensitivity, 1050.0, 1510.0)
+			aim_position.y = clampf(aim_position.y + event.relative.y * sensitivity, 350.0, 690.0)
 			queue_redraw()
 		return
-	# Touch joystick lives in the lower-left gap between navigation and profile panels.
-	if event is InputEventScreenTouch:
-		if event.pressed and event.position.distance_to(joystick_center) <= joystick_radius * 1.45:
-			joystick_touch_index = event.index
-			_update_virtual_joystick(event.position)
-			get_viewport().set_input_as_handled()
-			return
-		elif not event.pressed and event.index == joystick_touch_index:
-			joystick_touch_index = -1
-			virtual_axis = Vector2.ZERO
-			get_viewport().set_input_as_handled()
-			return
-	elif event is InputEventScreenDrag and event.index == joystick_touch_index:
-		_update_virtual_joystick(event.position)
-		get_viewport().set_input_as_handled()
-		return
-	if event is InputEventKey and event.pressed and not event.echo:
-		if event.keycode == KEY_E:
-			if current_floor < 2:
-				_use_stairs_up()
-			else:
-				_use_stairs_down()
+	# Room hotspots remain tappable; no movement command is issued for the hero.
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-		if _is_walkable_screen_point(event.position):
-			if _try_stair_navigation(event.position):
-				get_viewport().set_input_as_handled()
-				return
-			if _try_enter_room_at(event.position):
-				get_viewport().set_input_as_handled()
-				return
-			pending_interaction_room = ""
-			pending_stair_floor = -1
-			_select_room_at(event.position)
-			target_pos = _clamp_walkable_point(event.position)
-			moving = true
-	elif event is InputEventScreenTouch and event.pressed:
-		if _is_walkable_screen_point(event.position):
-			if _try_stair_navigation(event.position):
-				get_viewport().set_input_as_handled()
-				return
-			if _try_enter_room_at(event.position):
-				get_viewport().set_input_as_handled()
-				return
-			pending_interaction_room = ""
-			pending_stair_floor = -1
-			_select_room_at(event.position)
-			target_pos = _clamp_walkable_point(event.position)
-			moving = true
+		if _try_enter_room_at(event.position):
+			get_viewport().set_input_as_handled()
+			return
+	if event is InputEventScreenTouch and event.pressed:
+		if _try_enter_room_at(event.position):
+			get_viewport().set_input_as_handled()
+			return
+	# The hero is no longer a movable miniature on the hub. All other actions use the illustrated buttons.
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ESCAPE:
+		if room_mode:
+			_leave_room_view()
+			get_viewport().set_input_as_handled()
 
 func _is_walkable_screen_point(point: Vector2) -> bool:
 	# The bunker illustration spans three distinct horizontal walkable levels.
@@ -1208,10 +1161,23 @@ func _interact_with_furniture(room_id: String) -> void:
 			_enter_balcony_defense()
 
 func _try_enter_room_at(point: Vector2) -> bool:
-	for i in range(room_rects.size()):
-		if room_rects[i].has_point(point):
-			var room: Dictionary = LEVELS[current_floor]["rooms"][i]
-			_enter_room_view(str(room["id"]), str(room["name"]))
+	# The approved bunker artwork exposes all nine rooms at once. Tapping a
+	# room opens its independent full-screen illustration; the hero does not walk.
+	var room_hitboxes := [
+		{"id":"bedroom", "name":"СПАЛЬНЯ", "rect":Rect2(145, 190, 250, 165), "floor":2},
+		{"id":"living", "name":"ГОСТИНАЯ", "rect":Rect2(395, 190, 300, 165), "floor":2},
+		{"id":"lookout", "name":"СМОТРОВАЯ", "rect":Rect2(695, 190, 320, 165), "floor":2},
+		{"id":"techblock", "name":"ЛАБОРАТОРИЯ", "rect":Rect2(145, 355, 250, 165), "floor":1},
+		{"id":"arsenal", "name":"ОРУЖЕЙНАЯ", "rect":Rect2(395, 355, 300, 165), "floor":1},
+		{"id":"kitchen", "name":"КУХНЯ", "rect":Rect2(695, 355, 320, 165), "floor":1},
+		{"id":"greenhouse", "name":"ТЕПЛИЦА", "rect":Rect2(300, 520, 250, 165), "floor":0},
+		{"id":"workshop", "name":"МАСТЕРСКАЯ", "rect":Rect2(550, 520, 250, 165), "floor":0},
+		{"id":"storage", "name":"СКЛАД", "rect":Rect2(800, 520, 220, 165), "floor":0}
+	]
+	for room_data in room_hitboxes:
+		if room_data["rect"].has_point(point):
+			current_floor = int(room_data["floor"])
+			_enter_room_view(str(room_data["id"]), str(room_data["name"]))
 			return true
 	return false
 
@@ -1265,49 +1231,9 @@ func _process(delta: float) -> void:
 	if room_mode:
 		_process_room_mode(delta)
 		return
-	var axis := Vector2(Input.get_axis("ui_left", "ui_right"), Input.get_axis("ui_up", "ui_down"))
-	if virtual_axis.length() > 0.08:
-		axis = virtual_axis
-	if stair_transition_active:
-		_process_stair_transition(delta)
-	elif axis.length() > 0.1:
-		pending_interaction_room = ""
-		pending_stair_floor = -1
-		var axis_candidate := player_pos + axis.normalized() * PLAYER_SPEED * delta
-		if _can_stand_at(axis_candidate):
-			player_pos = axis_candidate
-		moving = false
-		_update_facing(axis)
-		animation_clock += delta
-		if animation_clock >= 0.12:
-			animation_clock = 0.0
-			animation_frame = (animation_frame + 1) % 4
-	elif moving:
-		var diff := target_pos - player_pos
-		if diff.length() < 5.0:
-			moving = false
-			if pending_stair_floor >= 0:
-				_begin_stair_transition(pending_stair_floor)
-			elif not pending_interaction_room.is_empty():
-				var interaction_room := pending_interaction_room
-				pending_interaction_room = ""
-				_interact_with_furniture(interaction_room)
-				_update_ui()
-		else:
-			var move_dir := diff.normalized()
-			var target_candidate := player_pos + move_dir * PLAYER_SPEED * delta
-			if _can_stand_at(target_candidate):
-				player_pos = target_candidate
-			else:
-				moving = false
-			_update_facing(move_dir)
-			animation_clock += delta
-			if animation_clock >= 0.12:
-				animation_clock = 0.0
-				animation_frame = (animation_frame + 1) % 4
-	if axis.length() <= 0.1 and not moving and not stair_transition_active:
-		animation_frame = 0
-	player_pos = _clamp_walkable_point(player_pos)
+	# The hero is not moved around the bunker map in v0.36.0. Rooms are
+	# entered directly by tapping their illustrated areas; the hero portrait
+	# remains a fixed visual anchor in the hub and room scenes.
 	# Advance the clock with a fractional accumulator so sub-minute frame
 	# increments are not discarded (the old int(delta * 2) never advanced).
 	time_fraction += delta * 2.0
@@ -1321,13 +1247,10 @@ func _process(delta: float) -> void:
 	if health <= 0 and not game_over:
 		game_over = true
 		_set_message("Ты погиб. Загрузи последнее сохранение или начни заново.")
-	var near_stairs := player_pos.distance_to(STAIR_LANDINGS[current_floor]) <= 85.0
 	if is_instance_valid(stair_up_button):
-		stair_up_button.disabled = current_floor >= 2
-		stair_up_button.visible = near_stairs and not room_mode and not defense_mode
+		stair_up_button.visible = false
 	if is_instance_valid(stair_down_button):
-		stair_down_button.disabled = current_floor <= 0
-		stair_down_button.visible = near_stairs and not room_mode and not defense_mode
+		stair_down_button.visible = false
 	_update_ui()
 	queue_redraw()
 
@@ -1841,7 +1764,7 @@ func _update_ui() -> void:
 	else:
 		message_label.text = last_message
 	if dynamic_counters.size() > 0:
-		dynamic_counters["day"].text = "День %d" % day
+		dynamic_counters["day"].text = "День %d\n%02d:%02d" % [day, int(minute_of_day / 60), minute_of_day % 60]
 		dynamic_counters["health"].text = "%d/100" % int(health)
 		dynamic_counters["energy"].text = "%d/100" % int(energy)
 		dynamic_counters["hunger"].text = "%d/100" % int(hunger)
@@ -2008,9 +1931,6 @@ func _load_art_assets() -> void:
 	var approved_path := "res://art/ui/approved_fullscreen.png"
 	if ResourceLoader.exists(approved_path):
 		approved_ui_texture = load(approved_path)
-	var balcony_path := "res://art/ui/approved_balcony.png"
-	if ResourceLoader.exists(balcony_path):
-		balcony_ui_texture = load(balcony_path)
 	var ids := ["bedroom", "living", "kitchen", "workshop", "storage", "arsenal", "greenhouse", "techblock", "lookout"]
 	for room_id in ids:
 		var path := "res://art/rooms/%s.png" % room_id
@@ -2019,12 +1939,15 @@ func _load_art_assets() -> void:
 	var character_path := "res://art/characters/survivor_sheet.png"
 	if ResourceLoader.exists(character_path):
 		survivor_texture = load(character_path)
-	var turret_path := "res://art/defense/turret.png"
-	if ResourceLoader.exists(turret_path):
-		turret_texture = load(turret_path)
 	var zombie_path := "res://art/defense/zombie.png"
 	if ResourceLoader.exists(zombie_path):
 		zombie_texture = load(zombie_path)
+	var zombie_walk_path := "res://art/defense/zombie_walk_4x4.png"
+	if ResourceLoader.exists(zombie_walk_path):
+		zombie_walk_texture = load(zombie_walk_path)
+	var hero_path := "res://art/characters/hero_portrait.png"
+	if ResourceLoader.exists(hero_path):
+		hero_portrait_texture = load(hero_path)
 
 func _update_facing(direction: Vector2) -> void:
 	if absf(direction.x) > absf(direction.y):
@@ -2036,64 +1959,87 @@ func _draw() -> void:
 	if room_mode:
 		_draw_room_view()
 		return
-	var active_texture: Texture2D = balcony_ui_texture if defense_mode else approved_ui_texture
+	var active_texture: Texture2D = approved_ui_texture
 	if active_texture != null:
 		draw_texture_rect(active_texture, Rect2(Vector2.ZERO, Vector2(1536, 864)), false)
 	else:
 		draw_rect(Rect2(Vector2.ZERO, Vector2(1536, 864)), Color("211a14"), true)
 	if defense_mode:
-		_draw_machinegun_turret()
+		_draw_sniper_scope()
 		# Large, progressively growing infected silhouettes enter only from the water.
 		for target in defense_targets:
 			_draw_zombie_target(target)
-		# Spent brass ejects from the right side of the receiver and falls away.
-		for casing in casing_particles:
-			var casing_pos: Vector2 = casing["pos"]
-			var life_ratio := clampf(float(casing["life"]) / 0.85, 0.0, 1.0)
-			draw_set_transform(casing_pos, float(casing["spin"]) * (1.0 - life_ratio), Vector2.ONE)
-			draw_rect(Rect2(-8, -3, 17, 6), Color("b77b2e"), true)
-			draw_rect(Rect2(-6, -2, 12, 2), Color("f2c36b"), true)
-			draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 		var reticle_color := Color("ff4030") if defense_hit_flash > 0.0 else Color("ffe5b2")
 		var reticle_radius := 14.0 if zoom_mode else (19.0 if aim_mode else 24.0)
-		draw_arc(aim_position, reticle_radius, 0.0, TAU, 36, reticle_color, 2.5)
-		draw_line(aim_position + Vector2(-38, 0), aim_position + Vector2(-12, 0), reticle_color, 2.0)
-		draw_line(aim_position + Vector2(12, 0), aim_position + Vector2(38, 0), reticle_color, 2.0)
-		draw_line(aim_position + Vector2(0, -38), aim_position + Vector2(0, -12), reticle_color, 2.0)
-		draw_line(aim_position + Vector2(0, 12), aim_position + Vector2(0, 38), reticle_color, 2.0)
+		var reticle_pos := aim_position
+		if zoom_mode:
+			var crop_size := Vector2(620.0, 350.0)
+			var crop_origin := aim_position - crop_size * 0.5
+			crop_origin.x = clampf(crop_origin.x, 900.0, 1536.0 - crop_size.x)
+			crop_origin.y = clampf(crop_origin.y, 260.0, 864.0 - crop_size.y)
+			reticle_pos = (aim_position - crop_origin) * Vector2(1536.0 / crop_size.x, 864.0 / crop_size.y)
+		draw_arc(reticle_pos, reticle_radius, 0.0, TAU, 36, reticle_color, 2.5)
+		draw_line(reticle_pos + Vector2(-38, 0), reticle_pos + Vector2(-12, 0), reticle_color, 2.0)
+		draw_line(reticle_pos + Vector2(12, 0), reticle_pos + Vector2(38, 0), reticle_color, 2.0)
+		draw_line(reticle_pos + Vector2(0, -38), reticle_pos + Vector2(0, -12), reticle_color, 2.0)
+		draw_line(reticle_pos + Vector2(0, 12), reticle_pos + Vector2(0, 38), reticle_color, 2.0)
 	else:
-		if survivor_texture != null:
-			var source := Rect2(float(animation_frame) * 128.0, float(facing_row) * 160.0, 128.0, 160.0)
-			var stair_bob := sin(stair_step_bob) * 1.5 if stair_transition_active else 0.0
-			var destination := Rect2(player_pos.x - 36.0, player_pos.y - 82.0 + stair_bob, 72.0, 90.0)
-			draw_texture_rect_region(survivor_texture, destination, source)
-		_draw_virtual_joystick()
+		# The survivor is a permanent illustrated hero portrait in the approved hub art.
+		# No tiny roaming avatar or virtual movement joystick is drawn on the map.
+		pass
 
-func _draw_machinegun_turret() -> void:
-	var direction := (aim_position - TURRET_PIVOT).normalized()
-	turret_angle = Vector2.UP.angle_to(direction)
-	var recoil_offset := turret_recoil * 8.0
-	if turret_texture != null:
-		draw_set_transform(TURRET_PIVOT + direction * recoil_offset, turret_angle, Vector2.ONE)
-		draw_texture_rect(turret_texture, Rect2(-200.0, -420.0, 400.0, 420.0), false)
-		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+func _draw_sniper_scope() -> void:
+	if approved_ui_texture == null:
+		return
+	if zoom_mode:
+		# Render a magnified crop of the shoreline under a circular optical overlay.
+		var crop_size := Vector2(620.0, 350.0)
+		var crop_origin := aim_position - crop_size * 0.5
+		crop_origin.x = clampf(crop_origin.x, 900.0, 1536.0 - crop_size.x)
+		crop_origin.y = clampf(crop_origin.y, 260.0, 864.0 - crop_size.y)
+		draw_texture_rect_region(approved_ui_texture, Rect2(0, 0, 1536, 864), Rect2(crop_origin, crop_size), Color.WHITE)
+		# Heavy vignette and a clean circular reticle create the optical-scope view.
+		draw_rect(Rect2(0, 0, 1536, 864), Color(0.015, 0.012, 0.01, 0.20), true)
+		var center := Vector2(768.0, 432.0)
+		draw_arc(center, 385.0, 0.0, TAU, 120, Color("0b0907"), 18.0)
+		draw_arc(center, 375.0, 0.0, TAU, 120, Color("d8c39a"), 2.0)
+	else:
+		# The hero's rifle is part of the permanent lower-left hero illustration.
+		# This subtle reticle remains on the live beach view until optical aim is enabled.
+		draw_arc(aim_position, 18.0, 0.0, TAU, 40, Color("ffe2a4"), 2.0)
+		draw_line(aim_position + Vector2(-30, 0), aim_position + Vector2(-9, 0), Color("ffe2a4"), 2.0)
+		draw_line(aim_position + Vector2(9, 0), aim_position + Vector2(30, 0), Color("ffe2a4"), 2.0)
+		draw_line(aim_position + Vector2(0, -30), aim_position + Vector2(0, -9), Color("ffe2a4"), 2.0)
+		draw_line(aim_position + Vector2(0, 9), aim_position + Vector2(0, 30), Color("ffe2a4"), 2.0)
 	if muzzle_flash_timer > 0.0:
-		var muzzle := _get_turret_muzzle_position()
-		draw_line(muzzle, aim_position, Color(1.0, 0.78, 0.34, 0.55), 3.0)
-		draw_circle(muzzle, 28.0, Color(1.0, 0.56, 0.12, 0.24))
-		draw_circle(muzzle, 16.0, Color(1.0, 0.78, 0.28, 0.62))
+		draw_circle(Vector2(768, 432), 32.0, Color(1.0, 0.78, 0.34, 0.30))
 
 func _draw_zombie_target(target: Dictionary) -> void:
 	var pos: Vector2 = target["pos"]
 	var scale_factor := float(target["scale"])
-	if zombie_texture != null:
-		var size := Vector2(145.0, 158.0) * scale_factor
-		draw_texture_rect(zombie_texture, Rect2(pos.x - size.x * 0.5, pos.y - size.y, size.x, size.y), false)
-	else:
-		push_error("Нет текстуры заражённого для режима обороны.")
+	var draw_pos := pos
+	var draw_scale := scale_factor
+	if zoom_mode:
+		var crop_size := Vector2(620.0, 350.0)
+		var crop_origin := aim_position - crop_size * 0.5
+		crop_origin.x = clampf(crop_origin.x, 900.0, 1536.0 - crop_size.x)
+		crop_origin.y = clampf(crop_origin.y, 260.0, 864.0 - crop_size.y)
+		draw_pos = (pos - crop_origin) * Vector2(1536.0 / crop_size.x, 864.0 / crop_size.y)
+		draw_scale = scale_factor * 2.1
+	if zombie_walk_texture != null:
+		var cell_w := 256.0
+		var cell_h := 384.0
+		var col := zombie_animation_frame % 4
+		var row := int(zombie_animation_frame / 4)
+		var source := Rect2(float(col) * cell_w, float(row) * cell_h, cell_w, cell_h)
+		var size := Vector2(112.0, 168.0) * draw_scale
+		draw_texture_rect_region(zombie_walk_texture, Rect2(draw_pos.x - size.x * 0.5, draw_pos.y - size.y, size.x, size.y), source, Color.WHITE, false)
+	elif zombie_texture != null:
+		var size := Vector2(112.0, 168.0) * draw_scale
+		draw_texture_rect(zombie_texture, Rect2(draw_pos.x - size.x * 0.5, draw_pos.y - size.y, size.x, size.y), false)
 	if int(target["hp"]) > 1:
-		draw_rect(Rect2(pos.x - 22.0 * scale_factor, pos.y - 168.0 * scale_factor, 44.0 * scale_factor, 5.0 * scale_factor), Color("241512"), true)
-		draw_rect(Rect2(pos.x - 22.0 * scale_factor, pos.y - 168.0 * scale_factor, 22.0 * scale_factor, 5.0 * scale_factor), Color("df3429"), true)
+		draw_rect(Rect2(draw_pos.x - 22.0 * draw_scale, draw_pos.y - 168.0 * draw_scale, 44.0 * draw_scale, 5.0 * draw_scale), Color("241512"), true)
+		draw_rect(Rect2(draw_pos.x - 22.0 * draw_scale, draw_pos.y - 168.0 * draw_scale, 22.0 * draw_scale, 5.0 * draw_scale), Color("df3429"), true)
 
 func _draw_virtual_joystick() -> void:
 	# Subtle parchment-style touch control, visible on phones and harmless on desktop.

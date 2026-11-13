@@ -26,6 +26,6 @@ Room story action counts are saved in `user://last_shelter_save.cfg` under the w
 - **Armory — Keeping the weapons ready:** worn parts are found; the weapons are serviced; defensive readiness is recorded.
 - **Greenhouse — First harvest:** healthy seedlings are found; irrigation and planting are restored; the first small harvest improves food autonomy.
 - **Technical block — Clean water:** a clogged filter is diagnosed; the pump and cartridge are serviced; clean water production is restored.
-- **Lookout — A signal by the yacht:** a faint reflection is spotted offshore; movement is seen approaching through the water; the hero raises the alarm and enters the turret defense mode.
+- **Lookout — A signal by the yacht:** a faint reflection is spotted offshore; movement is seen approaching through the water; the hero raises the alarm and enters the sniper defense mode.
 
 Each action advances the relevant room's story counter up to three stages. The stage counter is stored with the normal save data.
