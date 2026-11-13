@@ -920,7 +920,7 @@ func _try_furniture_interaction(point: Vector2) -> bool:
 			"greenhouse": hotspot = local.y > 0.30
 			"techblock": hotspot = local.x > 0.25 and local.y > 0.25
 			"lookout": hotspot = local.x > 0.35 and local.y < 0.85
-			if hotspot:
+		if hotspot:
 			pending_stair_floor = -1
 			selected_room_id = room_id
 			selected_room_name = str(room["name"])

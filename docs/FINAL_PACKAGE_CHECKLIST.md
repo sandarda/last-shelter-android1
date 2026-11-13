@@ -1,4 +1,4 @@
-# Final handoff checklist — v0.33.0
+# Final handoff checklist — v0.33.1
 
 ## Included in this source package
 - Godot 4.3 project and main scene.

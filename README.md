@@ -1,4 +1,4 @@
-# Последнее убежище — v0.33.0
+# Последнее убежище — v0.33.1
 
 Godot 4.3 project for Android (ARM64), with two fixed approved visual references: the full bunker overview and the first-person balcony defense screen. The current package is intended for GitHub Actions to build a debug APK.
 

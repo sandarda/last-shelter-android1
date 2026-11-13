@@ -169,3 +169,10 @@
 - Android virtual joystick touch lifecycle.
 - Aim-accurate zombie target combat with movement, health, breach damage, and wave progression.
 - Visible aim/zoom state.
+
+
+## v0.33.1 — Android import fixes
+
+- Converted `art/ui/approved_fullscreen.png` from JPEG bytes to a valid PNG file while preserving its 1536×864 dimensions.
+- Fixed the indentation after the furniture-room `match` block so `if hotspot` is evaluated after the match, not parsed as a match pattern.
+- Updated Android version code to 34 and version name to 0.33.1.

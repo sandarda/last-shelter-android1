@@ -68,7 +68,7 @@ if project.exists():
     p = project.read_text(encoding="utf-8")
     require('run/main_scene="res://scenes/main.tscn"' in p, "main scene path matches project settings")
     require('config/name="Последнее убежище"' in p, "project title is configured")
-    require('config/version="0.33.0"' in p, "project version matches final source package")
+    require('config/version="0.33.1"' in p, "project version matches final source package")
 if scene.exists():
     s = scene.read_text(encoding="utf-8")
     require('res://scripts/game.gd' in s, "main scene references game.gd")
@@ -161,17 +161,13 @@ icon = ROOT / "art/app_icon.png"
 build_doc = ROOT / "docs/ANDROID_BUILD.md"
 require(preset.is_file() and 'name="Android"' in preset.read_text(encoding="utf-8"), "Android export preset exists")
 require(preset.is_file() and 'architectures/arm64-v8a=true' in preset.read_text(encoding="utf-8"), "Android preset targets ARM64")
-require(preset.is_file() and 'version/code=33' in preset.read_text(encoding="utf-8") and 'version/name="0.33.0"' in preset.read_text(encoding="utf-8"), "Android version code/name are updated")
+require(preset.is_file() and 'version/code=34' in preset.read_text(encoding="utf-8") and 'version/name="0.33.1"' in preset.read_text(encoding="utf-8"), "Android version code/name are updated")
 require(workflow.is_file() and 'godot --headless --path . --export-debug "Android"' in workflow.read_text(encoding="utf-8") and 'godot --headless --path . --quit-after 5' in workflow.read_text(encoding="utf-8"), "GitHub Actions Android export workflow and runtime smoke test exist")
 require(icon.is_file() and icon.stat().st_size > 1000, "application icon asset exists")
 require(build_doc.is_file() and "GitHub build" in build_doc.read_text(encoding="utf-8"), "Android build instructions exist")
 gitignore = ROOT / ".gitignore"
-ignore_text = gitignore.read_text(encoding="utf-8") if gitignore.is_file() else ""
-ignore_patterns = {line.strip().lstrip("\ufeff") for line in ignore_text.splitlines() if line.strip() and not line.lstrip().startswith("#")}
-print("DEBUG ROOT:", ROOT)
-print("DEBUG GITIGNORE EXISTS:", gitignore.is_file())
-print("DEBUG PATTERNS:", sorted(ignore_patterns))
-print("DEBUG ROOT FILES:", [repr(p.name) for p in ROOT.iterdir()])
+ignore_text = gitignore.read_text(encoding="utf-8-sig") if gitignore.is_file() else ""
+ignore_patterns = {line.strip() for line in ignore_text.splitlines() if line.strip() and not line.lstrip().startswith("#")}
 require(gitignore.is_file() and {".godot/", ".import/", "build/", "*.keystore", "*.jks"}.issubset(ignore_patterns), "generated Godot files and signing keys are excluded from Git")
 if project.exists():
     ptxt = project.read_text(encoding="utf-8")
