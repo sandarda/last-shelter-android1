@@ -1,4 +1,23 @@
+# Changelog
+
+## v0.39.2
+- Replaced the seven remaining room backgrounds with the exact user-approved images: kitchen, lookout, greenhouse, laboratory, armory, workshop, and storage.
+- Preserved the approved bedroom and living room images from v0.39.1.
+- Updated Android version to 0.39.2 (version code 43).
+
+- Replaced bedroom and living room artwork with the individually approved room images.
+- Kept the other seven approved room images and gameplay code unchanged.
+- Android version updated to 0.39.2 (version code 43).
+
 # CHANGELOG
+
+## v0.39.0
+- Integrated the nine final, individually approved room interiors as separate 1536×864 PNGs.
+- Preserved room navigation, story actions, save/load, autosave, sniper defense, zombie animation, and the approved main bunker screen.
+
+## v0.38.1
+- Replaced all nine room images with individual high-resolution 1536×864 PNGs cropped from the user-supplied reference collage.
+
 
 ## v0.36.0
 - Persistent hero portrait replaces the tiny moving avatar on the main bunker map.
@@ -224,3 +243,19 @@
 - Converted `art/ui/approved_fullscreen.png` from JPEG bytes to a valid PNG file while preserving its 1536×864 dimensions.
 - Fixed the indentation after the furniture-room `match` block so `if hotspot` is evaluated after the match, not parsed as a match pattern.
 - Updated Android version code to 34 and version name to 0.33.1.
+
+
+## v0.37.0 — Room entry and sniper scene correction
+
+- Corrected the 3×3 room tap map to match the visible room positions and room identities in the approved hub illustration.
+- All nine rooms now map directly to their own high-detail full-screen room artwork.
+- Added a dedicated illustrated balcony-sniper background instead of reusing the bunker hub image in defense mode.
+- Optical zoom now uses the balcony scene and keeps the aim point centered within the magnified crop.
+- Expanded aim travel across the beach area and aligned animated zombie spawn positions to the new scene.
+- Corrected the sniper ammunition defaults and saved-state bounds to 5 loaded + 25 reserve.
+
+## v0.38.0 — девять обновлённых интерьерных сцен
+- Полностью заменены девять интерьерных backplate PNG отдельными полноэкранными сценами 1536×864.
+- Герой отображается в комнатах и на балконе; боезапас сохраняется после выстрела и перезарядки.
+- Усилен статический валидатор: проверка разрешения и уникальности всех девяти интерьерных изображений.
+- Godot runtime и Android APK export в текущем окружении не запускались.

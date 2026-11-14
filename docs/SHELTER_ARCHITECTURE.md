@@ -1,16 +1,5 @@
-# Shelter architecture — v0.36.0
+# Shelter architecture — v0.37.0
 
-The project uses a fixed, illustrated cliffside bunker hub. The hero is represented by a large permanent portrait in the hub art rather than a tiny roaming character. Room taps open separate full-screen illustrations.
+The project is a single Godot 4.3 Node2D game scene with a script-driven illustrated hub, contextual full-screen room views, and a dedicated balcony-defense mode. The hub retains the approved cliffside cutaway and fixed hero illustration. Nine room hitboxes map to nine separate high-detail room assets.
 
-## Art assets
-- `art/ui/approved_fullscreen.png` — current hub artwork and persistent hero illustration.
-- `art/rooms/` — nine full-screen room images.
-- `art/characters/hero_portrait.png` — transparent hero portrait for room scenes.
-- `art/defense/zombie_walk_4x4.png` — 16-frame RGBA zombie walk cycle.
-- `art/defense/zombie.png` — fallback infected artwork.
-
-## Gameplay systems
-- Survival resources and existing save migration remain in `scripts/game.gd`.
-- Sniper defense uses a 5-round magazine and 25-round reserve, with manual aiming, optical zoom, single-shot firing, and reload.
-- Zombies advance along the beach, animate through the sprite sheet, and scale with their distance from the shelter.
-- Room stories and progress remain stored in the existing save file.
+Room state and story progression are persisted in the save file. Autosave runs periodically and the Android pause/resume lifecycle triggers a save. Balcony defense uses a separate background asset, a 4×4 transparent animated zombie sprite sheet, perspective scaling, aim/zoom projection, hit detection, waves, and a 5+25 ammunition supply.

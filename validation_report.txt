@@ -1,49 +1,5 @@
-LAST SHELTER v0.36.0 — STATIC PROJECT CHECK
-[OK] Godot project is version 0.36.0
-[OK] main scene references the gameplay script
-[OK] GitHub Actions Android export workflow exists
-[OK] Android export version is 0.36.0 / code 38
-[OK] application icon exists
-[OK] required function _ready exists
-[OK] required function _process exists
-[OK] required function _draw exists
-[OK] required function _save_game exists
-[OK] required function _load_game exists
-[OK] required function _enter_room_view exists
-[OK] required function _draw_room_view exists
-[OK] required function _enter_balcony_defense exists
-[OK] required function _leave_balcony_defense exists
-[OK] required function _process_defense exists
-[OK] required function _fire_sniper exists
-[OK] required function _reload_sniper exists
-[OK] required function _toggle_aim_mode exists
-[OK] required function _draw_sniper_scope exists
-[OK] four sniper-defense waves are configured for the 5+25 round supply
-[OK] sniper magazine and reserve ammunition are initialized
-[OK] left aim and right single-shot controls are wired
-[OK] manual sniper reload is wired
-[OK] 16-frame zombie walk animation loops
-[OK] zombie animation frames are rendered from a sprite sheet
-[OK] hero is a fixed visual presence, not a roaming map sprite
-[OK] hero portrait is loaded for room scenes
-[OK] all nine rooms are directly tappable on the main location
-[OK] right-side action drawer remains removed
-[OK] approved v0.36 hub artwork is the full-screen presentation
-[OK] periodic autosave is preserved
-[OK] Android pause/resume lifecycle is handled
-[OK] room story progress remains persisted
-[OK] high-detail full-screen room art exists: bedroom
-[OK] high-detail full-screen room art exists: living
-[OK] high-detail full-screen room art exists: lookout
-[OK] high-detail full-screen room art exists: techblock
-[OK] high-detail full-screen room art exists: arsenal
-[OK] high-detail full-screen room art exists: kitchen
-[OK] high-detail full-screen room art exists: greenhouse
-[OK] high-detail full-screen room art exists: workshop
-[OK] high-detail full-screen room art exists: storage
-[OK] PNG decodes correctly: art/ui/approved_fullscreen.png (1536x864)
-[OK] PNG decodes correctly: art/characters/hero_portrait.png (1328x1184)
-[OK] PNG decodes correctly: art/defense/zombie_walk_4x4.png (1024x1536)
-
-45 passed, 0 failed
-NOTE: Static checks do not replace Godot import, runtime smoke test, or Android APK export.
+LAST SHELTER v0.39.2 — STATIC PROJECT CHECK
+Result: 60 passed, 0 failed.
+Seven approved room images replaced: kitchen, lookout, greenhouse, techblock, arsenal, workshop, storage.
+Bedroom and living remain the approved v0.39.1 images.
+Godot runtime test and Android APK export were not performed in this environment.

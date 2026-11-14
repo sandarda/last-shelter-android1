@@ -1,16 +1,19 @@
-# v0.36.0 final package checklist
+# v0.37.0 package checklist
 
-- [x] Godot project and Android export preset set to v0.36.0 / version code 38
+- [x] Godot project and Android export preset set to v0.37.0 / version code 39
 - [x] GitHub Actions workflow retained
-- [x] New main hub artwork includes the fixed hero portrait
-- [x] Tiny roaming avatar is no longer drawn on the main map
-- [x] All nine standalone room illustrations retained and directly tappable
-- [x] Hero portrait asset included for room scenes
-- [x] Sniper rifle replaces the machine gun; left aim and right single-shot controls wired
-- [x] 5-round magazine and 25-round reserve with manual reload
-- [x] 16-frame transparent zombie walking sprite sheet included and animated
-- [x] Perspective scaling of approaching zombies retained
+- [x] Approved main bunker artwork retained with fixed hero portrait
+- [x] Small roaming avatar removed from the main location
+- [x] All nine full-screen room illustrations retained and wired to corrected room hitboxes
+- [x] Temporary guest-room placeholder images removed
+- [x] Hero portrait has subtle breathing motion in room views
+- [x] Dedicated balcony sniper scene added
+- [x] Left aim / optical zoom and right single-shot controls wired
+- [x] Optical zoom crop and animated targets use the same projection
+- [x] Sniper ammunition set to 5 loaded + 25 reserve
+- [x] 16-frame transparent zombie walking sprite sheet retained and animated
+- [x] Zombie perspective scaling retained
 - [x] Autosave and Android lifecycle handling retained
-- [x] Static project validator passes
+- [x] Static validation passes
 
 The GitHub Actions workflow must still perform Godot import, headless runtime smoke test, Android export, APK verification, and artifact upload.

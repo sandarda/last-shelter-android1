@@ -1,9 +1,10 @@
 extends Node2D
 
-# Last Shelter v0.36 — approved hero portrait, sniper defense, animated zombies, and full-screen room art.
+# Last Shelter v0.39 — integrates the nine user-approved individual room interiors.
 const PLAYER_SPEED := 210.0
 const ROOM_W := 360.0
 const ROOM_H := 210.0
+const SCOPE_CROP_SIZE := Vector2(520.0, 300.0)
 const DAY_MINUTES := 24 * 60
 const SAVE_PATH := "user://last_shelter_save.cfg"
 
@@ -120,16 +121,16 @@ var defense_spawn_clock := 0.0
 var defense_breach_clock := 0.0
 var defense_shot_clock := 0.0
 var defense_wave_break := 0.0
-var ammo_loaded := 120
-var ammo_reserve := 300
+var ammo_loaded := 5
+var ammo_reserve := 25
 var fire_held := false
-var aim_position := Vector2(1360, 545)
+var aim_position := Vector2(1120, 535)
 var defense_hit_flash := 0.0
 var muzzle_flash_timer := 0.0
 var defense_targets: Array[Dictionary] = []
 var defense_target_spawn_points: Array[Vector2] = [
-	Vector2(1210, 420), Vector2(1270, 438), Vector2(1330, 415), Vector2(1390, 435),
-	Vector2(1450, 425), Vector2(1490, 455), Vector2(1250, 470), Vector2(1410, 465)
+	Vector2(900, 420), Vector2(970, 438), Vector2(1040, 415), Vector2(1110, 435),
+	Vector2(1180, 425), Vector2(1250, 455), Vector2(1010, 470), Vector2(1160, 465)
 ]
 var aim_mode := false
 var zoom_mode := false
@@ -143,6 +144,7 @@ var survivor_texture: Texture2D
 var zombie_texture: Texture2D
 var zombie_walk_texture: Texture2D
 var hero_portrait_texture: Texture2D
+var sniper_background_texture: Texture2D
 var zombie_animation_clock := 0.0
 var zombie_animation_frame := 0
 var animation_clock := 0.0
@@ -526,7 +528,7 @@ func _enter_balcony_defense() -> void:
 	ammo_reserve = 25
 	casing_particles.clear()
 	sniper_recoil = 0.0
-	aim_position = Vector2(1360.0, 545.0)
+	aim_position = Vector2(1120.0, 535.0)
 	_set_defense_controls_visible(true)
 	_set_message("Зомби выходят на берег. Нажми «ПРИЦЕЛИТЬСЯ», наведи оптику и стреляй по одному патрону.")
 	_update_defense_hud()
@@ -590,6 +592,7 @@ func _fire_sniper() -> void:
 	if defense_total_remaining == 0 and defense_active_targets == 0 and defense_spawned >= int(defense_wave_counts[defense_wave - 1]):
 		_complete_defense_wave()
 	_update_defense_hud()
+	_save_game_silent()
 	queue_redraw()
 
 func _reload_sniper() -> void:
@@ -601,6 +604,7 @@ func _reload_sniper() -> void:
 	ammo_reserve -= amount
 	_set_message("Винтовка перезаряжена: %d/5. Запас: %d." % [ammo_loaded, ammo_reserve])
 	_update_defense_hud()
+	_save_game_silent()
 
 func _toggle_aim_mode() -> void:
 	aim_mode = not aim_mode
@@ -663,7 +667,7 @@ func _process_defense(delta: float) -> void:
 			var target_scale := randf_range(0.22, 0.30)
 			# Store the surf line and initial size so perspective scale is derived
 			# from actual beach progress, not elapsed time.
-			defense_targets.append({"pos": spawn_pos, "spawn_y": spawn_pos.y, "start_scale": target_scale, "hp": 1 if defense_wave < 3 else 2, "scale": target_scale, "speed": 24.0 + float(defense_wave) * 4.0})
+			defense_targets.append({"pos": spawn_pos, "spawn_y": spawn_pos.y, "start_scale": target_scale, "hp": 1 if defense_wave < 3 else 2, "scale": target_scale, "speed": 24.0 + float(defense_wave) * 4.0, "emerge": 0.0})
 			defense_spawned += 1
 			defense_active_targets = defense_targets.size()
 			defense_spawn_clock = maxf(0.85, 2.1 - float(defense_wave) * 0.22)
@@ -672,6 +676,7 @@ func _process_defense(delta: float) -> void:
 	for i in range(defense_targets.size() - 1, -1, -1):
 		var target: Dictionary = defense_targets[i]
 		var pos: Vector2 = target["pos"]
+		target["emerge"] = minf(1.0, float(target.get("emerge", 0.0)) + delta * 0.85)
 		pos.y += float(target["speed"]) * delta
 		target["pos"] = pos
 		# Perspective is tied directly to distance travelled from the surf to
@@ -800,8 +805,8 @@ func _run_room_story_action() -> void:
 	_update_ui()
 
 func _process_room_mode(delta: float) -> void:
-	# The hero is presented as a static, prominent character portrait in rooms;
-	# room navigation is by interaction controls, not a tiny roaming avatar.
+	# The hero remains in place in room scenes; only a subtle breathing loop animates.
+	animation_clock += delta
 	time_fraction += delta * 2.0
 	var elapsed_minutes := int(time_fraction)
 	if elapsed_minutes > 0:
@@ -824,7 +829,10 @@ func _draw_room_view() -> void:
 	draw_rect(Rect2(0, 0, 1536, 78), Color(0.035, 0.025, 0.018, 0.80), true)
 	draw_rect(Rect2(0, 690, 1536, 174), Color(0.035, 0.025, 0.018, 0.36), true)
 	if hero_portrait_texture != null:
-		draw_texture_rect(hero_portrait_texture, Rect2(20.0, 560.0, 280.0, 250.0), false)
+		# A restrained breathing motion keeps the same recognizable hero present
+		# in every room without turning him into a roaming map character.
+		var breath := sin(animation_clock * 2.0) * 2.0
+		draw_texture_rect(hero_portrait_texture, Rect2(20.0, 560.0 + breath, 280.0, 250.0), false)
 	draw_string(ThemeDB.fallback_font, Vector2(1120, 700), "ДЕЙСТВИЕ В ПОМЕЩЕНИИ", HORIZONTAL_ALIGNMENT_CENTER, 330, 17, Color("f4d7a7"))
 
 func _select_and_run_room(room_id: String, room_name: String, callback: Callable) -> void:
@@ -1005,10 +1013,10 @@ func _unhandled_input(event: InputEvent) -> void:
 				get_viewport().set_input_as_handled()
 				return
 		if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-			aim_position = Vector2(clampf(event.position.x, 1050.0, 1510.0), clampf(event.position.y, 350.0, 690.0))
+			aim_position = Vector2(clampf(event.position.x, 780.0, 1276.0), clampf(event.position.y, 340.0, 714.0))
 			queue_redraw()
 		elif event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
-			aim_position = Vector2(clampf(event.position.x, 1050.0, 1510.0), clampf(event.position.y, 350.0, 690.0))
+			aim_position = Vector2(clampf(event.position.x, 780.0, 1276.0), clampf(event.position.y, 340.0, 714.0))
 			queue_redraw()
 		elif event is InputEventScreenTouch and event.pressed:
 			if event.position.y < 710.0 and event.position.x > 240.0:
@@ -1018,8 +1026,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			aim_touch_index = -1
 		elif event is InputEventScreenDrag and event.index == aim_touch_index:
 			var sensitivity := 1.0 if aim_mode else 0.65
-			aim_position.x = clampf(aim_position.x + event.relative.x * sensitivity, 1050.0, 1510.0)
-			aim_position.y = clampf(aim_position.y + event.relative.y * sensitivity, 350.0, 690.0)
+			aim_position.x = clampf(aim_position.x + event.relative.x * sensitivity, 780.0, 1276.0)
+			aim_position.y = clampf(aim_position.y + event.relative.y * sensitivity, 340.0, 714.0)
 			queue_redraw()
 		return
 	# Room hotspots remain tappable; no movement command is issued for the hero.
@@ -1112,7 +1120,7 @@ func _try_furniture_interaction(point: Vector2) -> bool:
 		# painted into each room illustration. Tapping elsewhere selects/moves.
 		var hotspot := false
 		match room_id:
-			"bedroom", "guest1", "guest2": hotspot = local.x < 0.53 and local.y > 0.30 and local.y < 0.88
+			"bedroom": hotspot = local.x < 0.53 and local.y > 0.30 and local.y < 0.88
 			"living": hotspot = (local.x < 0.48 and local.y > 0.38) or (local.x > 0.72 and local.y < 0.72)
 			"kitchen": hotspot = local.x > 0.48 and local.y > 0.42
 			"workshop": hotspot = local.y > 0.52 and local.x < 0.78
@@ -1138,7 +1146,7 @@ func _try_furniture_interaction(point: Vector2) -> bool:
 
 func _interact_with_furniture(room_id: String) -> void:
 	match room_id:
-		"bedroom", "guest1", "guest2":
+		"bedroom":
 			_rest()
 			_set_message("Ты прилёг на кровать и восстановил силы.")
 		"living":
@@ -1161,18 +1169,18 @@ func _interact_with_furniture(room_id: String) -> void:
 			_enter_balcony_defense()
 
 func _try_enter_room_at(point: Vector2) -> bool:
-	# The approved bunker artwork exposes all nine rooms at once. Tapping a
-	# room opens its independent full-screen illustration; the hero does not walk.
+	# Match each tappable compartment to its visible cell in the approved 3x3 cutaway.
+	# The left navigation rail and bottom action strip are deliberately excluded.
 	var room_hitboxes := [
-		{"id":"bedroom", "name":"СПАЛЬНЯ", "rect":Rect2(145, 190, 250, 165), "floor":2},
-		{"id":"living", "name":"ГОСТИНАЯ", "rect":Rect2(395, 190, 300, 165), "floor":2},
-		{"id":"lookout", "name":"СМОТРОВАЯ", "rect":Rect2(695, 190, 320, 165), "floor":2},
-		{"id":"techblock", "name":"ЛАБОРАТОРИЯ", "rect":Rect2(145, 355, 250, 165), "floor":1},
-		{"id":"arsenal", "name":"ОРУЖЕЙНАЯ", "rect":Rect2(395, 355, 300, 165), "floor":1},
-		{"id":"kitchen", "name":"КУХНЯ", "rect":Rect2(695, 355, 320, 165), "floor":1},
-		{"id":"greenhouse", "name":"ТЕПЛИЦА", "rect":Rect2(300, 520, 250, 165), "floor":0},
-		{"id":"workshop", "name":"МАСТЕРСКАЯ", "rect":Rect2(550, 520, 250, 165), "floor":0},
-		{"id":"storage", "name":"СКЛАД", "rect":Rect2(800, 520, 220, 165), "floor":0}
+		{"id":"bedroom", "name":"СПАЛЬНЯ", "rect":Rect2(145, 155, 225, 195), "floor":2},
+		{"id":"living", "name":"ГОСТИНАЯ", "rect":Rect2(370, 155, 285, 195), "floor":2},
+		{"id":"lookout", "name":"СМОТРОВАЯ", "rect":Rect2(655, 155, 330, 195), "floor":2},
+		{"id":"kitchen", "name":"КУХНЯ", "rect":Rect2(145, 350, 225, 165), "floor":1},
+		{"id":"greenhouse", "name":"ТЕПЛИЦА", "rect":Rect2(370, 350, 285, 165), "floor":1},
+		{"id":"techblock", "name":"ЛАБОРАТОРИЯ", "rect":Rect2(655, 350, 330, 165), "floor":1},
+		{"id":"arsenal", "name":"ОРУЖЕЙНАЯ", "rect":Rect2(145, 515, 225, 175), "floor":0},
+		{"id":"workshop", "name":"МАСТЕРСКАЯ", "rect":Rect2(370, 515, 285, 175), "floor":0},
+		{"id":"storage", "name":"СКЛАД", "rect":Rect2(655, 515, 330, 175), "floor":0}
 	]
 	for room_data in room_hitboxes:
 		if room_data["rect"].has_point(point):
@@ -1194,7 +1202,7 @@ func _select_room_at(point: Vector2) -> void:
 
 func _interact_with_room() -> void:
 	match selected_room_id:
-		"bedroom", "guest1", "guest2":
+		"bedroom":
 			_rest()
 			_set_message("Ты отдохнул в комнате. Силы восстановлены.")
 		"living":
@@ -1694,8 +1702,8 @@ func _new_game() -> void:
 	shelter_integrity = 100.0
 	game_over = false
 	defense_mode = false
-	ammo_loaded = 120
-	ammo_reserve = 300
+	ammo_loaded = 5
+	ammo_reserve = 25
 	defense_kills = 0
 	time_fraction = 0.0
 	weather = "ЯСНО"
@@ -1919,8 +1927,8 @@ func _load_game() -> void:
 	noise_level = clampf(float(cfg.get_value("world", "noise_level", 0.0)), 0.0, 100.0)
 	morale = clampf(float(cfg.get_value("world", "morale", 75.0)), 0.0, 100.0)
 	barricade_level = clampi(int(cfg.get_value("world", "barricade_level", 1)), 1, 5)
-	ammo_loaded = clampi(int(cfg.get_value("defense", "ammo_loaded", 120)), 0, 120)
-	ammo_reserve = clampi(int(cfg.get_value("defense", "ammo_reserve", 300)), 0, 3000)
+	ammo_loaded = clampi(int(cfg.get_value("defense", "ammo_loaded", 5)), 0, 5)
+	ammo_reserve = clampi(int(cfg.get_value("defense", "ammo_reserve", 25)), 0, 25)
 	defense_kills = maxi(int(cfg.get_value("defense", "kills", 0)), 0)
 	journal_step = clampi(int(cfg.get_value("world", "journal_step", 0)), 0, 5)
 	explored_cache = bool(cfg.get_value("world", "explored_cache", false))
@@ -1948,6 +1956,9 @@ func _load_art_assets() -> void:
 	var hero_path := "res://art/characters/hero_portrait.png"
 	if ResourceLoader.exists(hero_path):
 		hero_portrait_texture = load(hero_path)
+	var sniper_path := "res://art/defense/sniper_balcony.png"
+	if ResourceLoader.exists(sniper_path):
+		sniper_background_texture = load(sniper_path)
 
 func _update_facing(direction: Vector2) -> void:
 	if absf(direction.x) > absf(direction.y):
@@ -1959,13 +1970,16 @@ func _draw() -> void:
 	if room_mode:
 		_draw_room_view()
 		return
-	var active_texture: Texture2D = approved_ui_texture
+	var active_texture: Texture2D = sniper_background_texture if defense_mode and sniper_background_texture != null else approved_ui_texture
 	if active_texture != null:
 		draw_texture_rect(active_texture, Rect2(Vector2.ZERO, Vector2(1536, 864)), false)
 	else:
 		draw_rect(Rect2(Vector2.ZERO, Vector2(1536, 864)), Color("211a14"), true)
 	if defense_mode:
 		_draw_sniper_scope()
+		if hero_portrait_texture != null:
+			var hero_breath := sin(animation_clock * 2.0) * 1.5
+			draw_texture_rect(hero_portrait_texture, Rect2(18.0, 610.0 + hero_breath, 210.0, 190.0), false)
 		# Large, progressively growing infected silhouettes enter only from the water.
 		for target in defense_targets:
 			_draw_zombie_target(target)
@@ -1973,10 +1987,10 @@ func _draw() -> void:
 		var reticle_radius := 14.0 if zoom_mode else (19.0 if aim_mode else 24.0)
 		var reticle_pos := aim_position
 		if zoom_mode:
-			var crop_size := Vector2(620.0, 350.0)
+			var crop_size := SCOPE_CROP_SIZE
 			var crop_origin := aim_position - crop_size * 0.5
-			crop_origin.x = clampf(crop_origin.x, 900.0, 1536.0 - crop_size.x)
-			crop_origin.y = clampf(crop_origin.y, 260.0, 864.0 - crop_size.y)
+			crop_origin.x = clampf(crop_origin.x, 0.0, 1536.0 - crop_size.x)
+			crop_origin.y = clampf(crop_origin.y, 0.0, 864.0 - crop_size.y)
 			reticle_pos = (aim_position - crop_origin) * Vector2(1536.0 / crop_size.x, 864.0 / crop_size.y)
 		draw_arc(reticle_pos, reticle_radius, 0.0, TAU, 36, reticle_color, 2.5)
 		draw_line(reticle_pos + Vector2(-38, 0), reticle_pos + Vector2(-12, 0), reticle_color, 2.0)
@@ -1989,15 +2003,16 @@ func _draw() -> void:
 		pass
 
 func _draw_sniper_scope() -> void:
-	if approved_ui_texture == null:
+	var scope_texture: Texture2D = sniper_background_texture if sniper_background_texture != null else approved_ui_texture
+	if scope_texture == null:
 		return
 	if zoom_mode:
-		# Render a magnified crop of the shoreline under a circular optical overlay.
-		var crop_size := Vector2(620.0, 350.0)
+		# Render a magnified crop of the dedicated shoreline scene, centered on the touch aim point.
+		var crop_size := SCOPE_CROP_SIZE
 		var crop_origin := aim_position - crop_size * 0.5
-		crop_origin.x = clampf(crop_origin.x, 900.0, 1536.0 - crop_size.x)
-		crop_origin.y = clampf(crop_origin.y, 260.0, 864.0 - crop_size.y)
-		draw_texture_rect_region(approved_ui_texture, Rect2(0, 0, 1536, 864), Rect2(crop_origin, crop_size), Color.WHITE)
+		crop_origin.x = clampf(crop_origin.x, 0.0, 1536.0 - crop_size.x)
+		crop_origin.y = clampf(crop_origin.y, 0.0, 864.0 - crop_size.y)
+		draw_texture_rect_region(scope_texture, Rect2(0, 0, 1536, 864), Rect2(crop_origin, crop_size), Color.WHITE)
 		# Heavy vignette and a clean circular reticle create the optical-scope view.
 		draw_rect(Rect2(0, 0, 1536, 864), Color(0.015, 0.012, 0.01, 0.20), true)
 		var center := Vector2(768.0, 432.0)
@@ -2016,14 +2031,16 @@ func _draw_sniper_scope() -> void:
 
 func _draw_zombie_target(target: Dictionary) -> void:
 	var pos: Vector2 = target["pos"]
-	var scale_factor := float(target["scale"])
+	var emerge_progress := clampf(float(target.get("emerge", 1.0)), 0.0, 1.0)
+	var emerge_alpha := smoothstep(0.0, 1.0, emerge_progress)
+	var scale_factor := float(target["scale"]) * lerpf(0.38, 1.0, emerge_progress)
 	var draw_pos := pos
 	var draw_scale := scale_factor
 	if zoom_mode:
-		var crop_size := Vector2(620.0, 350.0)
+		var crop_size := SCOPE_CROP_SIZE
 		var crop_origin := aim_position - crop_size * 0.5
-		crop_origin.x = clampf(crop_origin.x, 900.0, 1536.0 - crop_size.x)
-		crop_origin.y = clampf(crop_origin.y, 260.0, 864.0 - crop_size.y)
+		crop_origin.x = clampf(crop_origin.x, 0.0, 1536.0 - crop_size.x)
+		crop_origin.y = clampf(crop_origin.y, 0.0, 864.0 - crop_size.y)
 		draw_pos = (pos - crop_origin) * Vector2(1536.0 / crop_size.x, 864.0 / crop_size.y)
 		draw_scale = scale_factor * 2.1
 	if zombie_walk_texture != null:
@@ -2033,10 +2050,10 @@ func _draw_zombie_target(target: Dictionary) -> void:
 		var row := int(zombie_animation_frame / 4)
 		var source := Rect2(float(col) * cell_w, float(row) * cell_h, cell_w, cell_h)
 		var size := Vector2(112.0, 168.0) * draw_scale
-		draw_texture_rect_region(zombie_walk_texture, Rect2(draw_pos.x - size.x * 0.5, draw_pos.y - size.y, size.x, size.y), source, Color.WHITE, false)
+		draw_texture_rect_region(zombie_walk_texture, Rect2(draw_pos.x - size.x * 0.5, draw_pos.y - size.y, size.x, size.y), source, Color(1.0, 1.0, 1.0, emerge_alpha), false)
 	elif zombie_texture != null:
 		var size := Vector2(112.0, 168.0) * draw_scale
-		draw_texture_rect(zombie_texture, Rect2(draw_pos.x - size.x * 0.5, draw_pos.y - size.y, size.x, size.y), false)
+		draw_texture_rect(zombie_texture, Rect2(draw_pos.x - size.x * 0.5, draw_pos.y - size.y, size.x, size.y), false, Color(1.0, 1.0, 1.0, emerge_alpha))
 	if int(target["hp"]) > 1:
 		draw_rect(Rect2(draw_pos.x - 22.0 * draw_scale, draw_pos.y - 168.0 * draw_scale, 44.0 * draw_scale, 5.0 * draw_scale), Color("241512"), true)
 		draw_rect(Rect2(draw_pos.x - 22.0 * draw_scale, draw_pos.y - 168.0 * draw_scale, 22.0 * draw_scale, 5.0 * draw_scale), Color("df3429"), true)

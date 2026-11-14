@@ -1,7 +1,7 @@
-# UI and visual design — v0.36.0
+# UI and visual design — v0.37.0
 
-- Main location: approved full-screen cliffside bunker artwork with warm detailed rooms, beach, and a large permanent hero illustration at the lower left. No small player sprite moves around the map.
-- Navigation: illustrated left-side navigation and bottom action buttons; the old right-side action drawer is absent.
-- Rooms: each of the nine rooms opens its own independent full-screen illustration. A static hero portrait is shown in the room view; no tiny walking avatar or movement joystick is used.
-- Defense: sniper rifle replaces the mounted machine gun. The left `ПРИЦЕЛИТЬСЯ` control toggles the optical view; the player drags on the beach to adjust aim; the right `ВЫСТРЕЛ` control fires one round. The `R` key reloads.
-- Zombies: animated 4×4 transparent sprite sheet, 16 frames, looping walk cycle, and perspective scaling as the infected approach the shelter.
+The approved cliffside bunker cutaway remains the main screen. The small roaming avatar is not shown; the hero remains a fixed illustrated presence in the hub artwork. Each of the nine room compartments opens its own high-detail full-screen illustration. The full-screen room view retains the hero portrait with a subtle breathing loop and contextual room action/story controls.
+
+Balcony defense uses its own dedicated illustrated sniper-perch background, rather than reusing the bunker hub. The left control toggles the optical scope; dragging on the beach moves the aim point; the right control fires one shot. The scope crop and animated targets share one projection so the crosshair stays aligned.
+
+The zombie walking sprite sheet is a 4×4 RGBA PNG with real transparency. The 16 frames loop while enemies approach and grow with perspective.
