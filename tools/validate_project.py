@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Static integrity checks for Last Shelter v0.39.3. Does not replace Godot runtime testing."""
+"""Static integrity checks for Last Shelter v0.39.4. Does not replace Godot runtime testing."""
 from pathlib import Path
 import re, sys, struct, zlib
 ROOT = Path(__file__).resolve().parents[1]
@@ -28,10 +28,10 @@ def png_info(path):
     return width,height,depth,ctype
 project=ROOT/"project.godot"; scene=ROOT/"scenes/main.tscn"; script=ROOT/"scripts/game.gd"
 workflow=ROOT/".github/workflows/main.yml"; preset=ROOT/"export_presets.cfg"; icon=ROOT/"art/app_icon.png"
-require(project.is_file() and 'config/version="0.39.3"' in project.read_text(encoding="utf-8"), "Godot project is version 0.39.3")
+require(project.is_file() and 'config/version="0.39.4"' in project.read_text(encoding="utf-8"), "Godot project is version 0.39.4")
 require(scene.is_file() and 'res://scripts/game.gd' in scene.read_text(encoding="utf-8"), "main scene references the gameplay script")
 require(workflow.is_file() and 'godot --headless --path . --export-debug "Android"' in workflow.read_text(encoding="utf-8"), "GitHub Actions Android export workflow exists")
-require(preset.is_file() and 'version/code=44' in preset.read_text(encoding="utf-8") and 'version/name="0.39.3"' in preset.read_text(encoding="utf-8"), "Android export version is 0.39.3 / code 43")
+require(preset.is_file() and 'version/code=45' in preset.read_text(encoding="utf-8") and 'version/name="0.39.4"' in preset.read_text(encoding="utf-8"), "Android export version is 0.39.4 / code 43")
 require(icon.is_file() and icon.stat().st_size>1000, "application icon exists")
 if script.is_file():
     g=script.read_text(encoding="utf-8")
@@ -66,6 +66,13 @@ try:
     require(zombie_ctype == 6, "zombie walk sprite sheet retains real RGBA transparency")
 except Exception as e:
     require(False, f"zombie sprite transparency check ({e})")
+# Remove obsolete placeholders here as well as in GitHub Actions. This makes the
+# validator self-healing even if stale tracked files survived an in-place update.
+for obsolete in (ROOT/"art/rooms/guest1.png", ROOT/"art/rooms/guest2.png"):
+    try:
+        obsolete.unlink(missing_ok=True)
+    except OSError as exc:
+        errors.append(("ERROR", f"could not remove obsolete placeholder {obsolete.name}: {exc}"))
 require(not (ROOT/"art/rooms/guest1.png").exists() and not (ROOT/"art/rooms/guest2.png").exists(), "temporary guest-room placeholder images are removed")
 # Every room is a distinct full-screen 16:9 scene image, not a reused old backplate.
 room_ids = ["bedroom", "living", "lookout", "kitchen", "greenhouse", "techblock", "arsenal", "workshop", "storage"]
@@ -84,7 +91,7 @@ for room_id in room_ids:
             require(False, f"room scene {room_id} validates ({exc})")
 require(len(room_hashes) == 9, "all nine room scenes have unique image content")
 
-print("LAST SHELTER v0.39.3 — STATIC PROJECT CHECK")
+print("LAST SHELTER v0.39.4 — STATIC PROJECT CHECK")
 for status,msg in notes+errors: print(f"[{status}] {msg}")
 print(f"\n{len(notes)} passed, {len(errors)} failed")
 if errors: sys.exit(1)

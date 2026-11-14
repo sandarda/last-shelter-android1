@@ -1,4 +1,4 @@
-# Последнее убежище — v0.39.3
+# Последнее убежище — v0.39.4
 
 Android survival game built with Godot 4.3. The project is exported as a debug APK by GitHub Actions.
 
@@ -44,13 +44,13 @@ Static validation does not replace Godot import, runtime smoke testing, or Andro
 - See `docs/UPDATE_GITHUB_V0_39.md`.
 
 
-## v0.39.3 — все девять утверждённых интерьеров
+## v0.39.4 — все девять утверждённых интерьеров
 
 - Семь оставшихся комнат заменены точными изображениями, присланными и утверждёнными пользователем.
 - Спальня и гостиная сохранены из v0.39.1.
 - Android version code: 43.
 
-## v0.39.3 — утверждённые спальня и гостиная
+## v0.39.4 — утверждённые спальня и гостиная
 - Заменены `art/rooms/bedroom.png` и `art/rooms/living.png` на отдельные изображения, ранее утверждённые пользователем.
 - Остальные семь утверждённых комнат и игровые скрипты не изменялись.
-- Обновлена версия Android до 0.39.3 (version code 43).
+- Обновлена версия Android до 0.39.4 (version code 43).

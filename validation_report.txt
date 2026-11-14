@@ -1,4 +1,4 @@
-LAST SHELTER v0.39.3 — STATIC PROJECT CHECK
+LAST SHELTER v0.39.4 — STATIC PROJECT CHECK
 Result: 60 passed, 0 failed.
 GitHub Actions now removes stale guest1.png and guest2.png before validation.
 All nine approved room images are preserved unchanged from v0.39.2.
