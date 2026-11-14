@@ -1,13 +1,13 @@
 # Changelog
 
-## v0.39.2
+## v0.39.3
 - Replaced the seven remaining room backgrounds with the exact user-approved images: kitchen, lookout, greenhouse, laboratory, armory, workshop, and storage.
 - Preserved the approved bedroom and living room images from v0.39.1.
-- Updated Android version to 0.39.2 (version code 43).
+- Updated Android version to 0.39.3 (version code 43).
 
 - Replaced bedroom and living room artwork with the individually approved room images.
 - Kept the other seven approved room images and gameplay code unchanged.
-- Android version updated to 0.39.2 (version code 43).
+- Android version updated to 0.39.3 (version code 43).
 
 # CHANGELOG
 

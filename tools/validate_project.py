@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Static integrity checks for Last Shelter v0.39.2. Does not replace Godot runtime testing."""
+"""Static integrity checks for Last Shelter v0.39.3. Does not replace Godot runtime testing."""
 from pathlib import Path
 import re, sys, struct, zlib
 ROOT = Path(__file__).resolve().parents[1]
@@ -28,10 +28,10 @@ def png_info(path):
     return width,height,depth,ctype
 project=ROOT/"project.godot"; scene=ROOT/"scenes/main.tscn"; script=ROOT/"scripts/game.gd"
 workflow=ROOT/".github/workflows/main.yml"; preset=ROOT/"export_presets.cfg"; icon=ROOT/"art/app_icon.png"
-require(project.is_file() and 'config/version="0.39.2"' in project.read_text(encoding="utf-8"), "Godot project is version 0.39.2")
+require(project.is_file() and 'config/version="0.39.3"' in project.read_text(encoding="utf-8"), "Godot project is version 0.39.3")
 require(scene.is_file() and 'res://scripts/game.gd' in scene.read_text(encoding="utf-8"), "main scene references the gameplay script")
 require(workflow.is_file() and 'godot --headless --path . --export-debug "Android"' in workflow.read_text(encoding="utf-8"), "GitHub Actions Android export workflow exists")
-require(preset.is_file() and 'version/code=43' in preset.read_text(encoding="utf-8") and 'version/name="0.39.2"' in preset.read_text(encoding="utf-8"), "Android export version is 0.39.2 / code 43")
+require(preset.is_file() and 'version/code=44' in preset.read_text(encoding="utf-8") and 'version/name="0.39.3"' in preset.read_text(encoding="utf-8"), "Android export version is 0.39.3 / code 43")
 require(icon.is_file() and icon.stat().st_size>1000, "application icon exists")
 if script.is_file():
     g=script.read_text(encoding="utf-8")
@@ -84,7 +84,7 @@ for room_id in room_ids:
             require(False, f"room scene {room_id} validates ({exc})")
 require(len(room_hashes) == 9, "all nine room scenes have unique image content")
 
-print("LAST SHELTER v0.39.2 — STATIC PROJECT CHECK")
+print("LAST SHELTER v0.39.3 — STATIC PROJECT CHECK")
 for status,msg in notes+errors: print(f"[{status}] {msg}")
 print(f"\n{len(notes)} passed, {len(errors)} failed")
 if errors: sys.exit(1)

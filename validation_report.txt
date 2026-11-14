@@ -1,5 +1,5 @@
-LAST SHELTER v0.39.2 — STATIC PROJECT CHECK
+LAST SHELTER v0.39.3 — STATIC PROJECT CHECK
 Result: 60 passed, 0 failed.
-Seven approved room images replaced: kitchen, lookout, greenhouse, techblock, arsenal, workshop, storage.
-Bedroom and living remain the approved v0.39.1 images.
+GitHub Actions now removes stale guest1.png and guest2.png before validation.
+All nine approved room images are preserved unchanged from v0.39.2.
 Godot runtime test and Android APK export were not performed in this environment.
